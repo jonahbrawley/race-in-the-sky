@@ -53,25 +53,66 @@ public class Racing {
 		appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		appFrame.setSize(WINWIDTH, WINHEIGHT);
 
-		JPanel myPanel = new JPanel();
+		JPanel myPanel = new MyPanel();
 
-		JButton testButton = new JButton("Karen tregaskin");
-		myPanel.add(testButton);
+		JButton startButton = new JButton("START RACE");
+		startButton.addActionListener(new StartGame((MyPanel) myPanel, startButton));
+		myPanel.add(startButton);
 
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
-		StartGame();
 	}
 
-	private static void StartGame() {
-		Thread t1 = new Thread( new Animate());
-		t1.start();
+	private static class MyPanel extends JPanel {
+		private boolean racestart = false;
+
+	    @Override
+	    protected void paintComponent(Graphics g) {
+	        super.paintComponent(g);
+	        if (racestart) {
+	        	Graphics2D g2D = (Graphics2D) g;
+	        	g2D.drawImage(sunny_hill, XOFFSET, YOFFSET, null);
+	        }
+	    }
+
+	    public void startRace() {
+	    	racestart = true;
+	    	repaint();
+	    }
+	}
+
+	private static class StartGame implements ActionListener {
+		private final MyPanel panel;
+		private final JButton startButton;
+
+		public StartGame(MyPanel panel, JButton startButton) {
+			this.panel = panel;
+			this.startButton = startButton;
+		}
+
+		public void actionPerformed(ActionEvent e) {
+			panel.startRace();
+			startButton.setVisible(false);
+			endgame = true;
+			// actions here
+			endgame = false;
+			Thread t1 = new Thread( new Animate());
+			t1.start();
+		}
 	}
 
 	private static class Animate implements Runnable {
 		public void run() {
+			// while (endgame == false) {
+			// 	backgroundDraw();
+			// 	try {
+			// 		Thread.sleep(32);
+			// 	} catch (InterruptedException e) {
+
+			// 	}
+			// }
 			while (endgame == false) {
-				backgroundDraw();
+				appFrame.repaint();
 				try {
 					Thread.sleep(32);
 				} catch (InterruptedException e) {
@@ -88,6 +129,7 @@ public class Racing {
 	}
 
 	private static Boolean endgame;
+	private static Boolean racestart;
 
 	private static int XOFFSET;
 	private static int YOFFSET;
