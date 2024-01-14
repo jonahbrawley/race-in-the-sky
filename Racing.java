@@ -55,9 +55,13 @@ public class Racing {
 
 		JPanel myPanel = new MyPanel();
 
-		JButton startButton = new JButton("START RACE");
-		startButton.addActionListener(new StartGame((MyPanel) myPanel, startButton));
-		myPanel.add(startButton);
+			startButton = new JButton("START RACE");
+			startButton.addActionListener(new StartGame((MyPanel) myPanel));
+			myPanel.add(startButton);
+
+			quitButton = new JButton("QUIT");
+			quitButton.addActionListener(new QuitGame());
+			myPanel.add(quitButton);
 
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
@@ -83,16 +87,15 @@ public class Racing {
 
 	private static class StartGame implements ActionListener {
 		private final MyPanel panel;
-		private final JButton startButton;
 
-		public StartGame(MyPanel panel, JButton startButton) {
+		public StartGame(MyPanel panel) {
 			this.panel = panel;
-			this.startButton = startButton;
 		}
 
 		public void actionPerformed(ActionEvent e) {
 			panel.startRace();
 			startButton.setVisible(false);
+			quitButton.setVisible(false);
 			endgame = true;
 			// actions here
 			endgame = false;
@@ -101,16 +104,14 @@ public class Racing {
 		}
 	}
 
+	private static class QuitGame implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			System.exit(0);
+		}
+	}
+
 	private static class Animate implements Runnable {
 		public void run() {
-			// while (endgame == false) {
-			// 	backgroundDraw();
-			// 	try {
-			// 		Thread.sleep(32);
-			// 	} catch (InterruptedException e) {
-
-			// 	}
-			// }
 			while (endgame == false) {
 				appFrame.repaint();
 				try {
@@ -130,6 +131,9 @@ public class Racing {
 
 	private static Boolean endgame;
 	private static Boolean racestart;
+
+	private static JButton startButton;
+	private static JButton quitButton;
 
 	private static int XOFFSET;
 	private static int YOFFSET;
