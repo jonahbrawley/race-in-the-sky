@@ -27,6 +27,11 @@ import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.awt.Color;
+
 public class Racing {
 	public Racing() {
 		setup();
@@ -54,17 +59,34 @@ public class Racing {
 		appFrame.setSize(WINWIDTH, WINHEIGHT);
 
 		JPanel myPanel = new MyPanel();
+		myPanel.setLayout(new GridBagLayout());
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+
+		gbc.ipady = 15;
+		gbc.ipadx = 50;
 
 			startButton = new JButton("START RACE");
 			startButton.addActionListener(new StartGame((MyPanel) myPanel));
-			myPanel.add(startButton);
+			setButtonAppearance(startButton);
+			myPanel.add(startButton, gbc);
 
+			gbc.insets = new Insets(10, 0, 0, 0);
 			quitButton = new JButton("QUIT");
 			quitButton.addActionListener(new QuitGame());
-			myPanel.add(quitButton);
+			setButtonAppearance(quitButton);
+			myPanel.add(quitButton, gbc);
+
 
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
+	}
+
+	private static void setButtonAppearance(JButton button) {
+		button.setBackground(BURLYWOOD);
+		button.setFocusPainted(false);
+		button.setOpaque(true);
 	}
 
 	private static class MyPanel extends JPanel {
@@ -135,6 +157,7 @@ public class Racing {
 	private static JButton startButton;
 	private static JButton quitButton;
 
+	private static Color BURLYWOOD = new Color(222, 184, 135);
 	private static int XOFFSET;
 	private static int YOFFSET;
 	private static int WINWIDTH;
