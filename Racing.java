@@ -31,6 +31,13 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Color;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.event.*;
+import javax.swing.border.Border;
+
+
+import javax.swing.*;
+import java.awt.*;
 
 public class Racing {
 	public Racing() {
@@ -67,27 +74,93 @@ public class Racing {
 		gbc.ipady = 15;
 		gbc.ipadx = 50;
 
-			startButton = new JButton("START RACE");
+			startButton = new MyButton("START RACE");
 			startButton.addActionListener(new StartGame((MyPanel) myPanel));
 			setButtonAppearance(startButton);
 			myPanel.add(startButton, gbc);
 
 			gbc.insets = new Insets(10, 0, 0, 0);
-			quitButton = new JButton("QUIT");
+			quitButton = new MyButton("QUIT");
 			quitButton.addActionListener(new QuitGame());
 			setButtonAppearance(quitButton);
 			myPanel.add(quitButton, gbc);
 
-
+		myPanel.setBackground(CELESTIAL);
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
 	}
 
 	private static void setButtonAppearance(JButton button) {
-		button.setBackground(BURLYWOOD);
+		button.setBorder(BorderFactory.createCompoundBorder(
+			new RoundBorder(15, URANIAN),
+			BorderFactory.createEmptyBorder(10, 20, 10, 20)
+			));
+
+		button.addMouseListener(new MouseAdapter(){
+
+		    @Override
+		    public void mousePressed(MouseEvent e) {
+		        button.setBackground(HIGHLIGHT);
+		    }
+
+		    @Override
+		    public void mouseReleased(MouseEvent e) {
+		        button.setBackground(URANIAN);
+		    }
+
+		});
+
+		
+		button.setBackground(URANIAN);
+		button.setForeground(Color.BLACK);
+		button.setContentAreaFilled(false);
+		button.setOpaque(false);
 		button.setFocusPainted(false);
-		button.setOpaque(true);
 	}
+
+	private static class RoundBorder implements Border { // Used for rounded buttons
+        private int radius;
+        private Color color;
+
+        public RoundBorder(int radius, Color color) {
+            this.radius = radius;
+            this.color = color;
+        }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setColor(color);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.draw(new RoundRectangle2D.Double(x, y, width - 1, height - 1, radius, radius));
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+            return new Insets(radius, radius, radius, radius);
+        }
+
+        @Override
+        public boolean isBorderOpaque() {
+            return true;
+        }
+    }
+
+    private static class MyButton extends JButton {
+    	public MyButton(String text) {
+    		super(text);
+    	}
+
+    	@Override
+    	protected void paintComponent(Graphics g) {
+    		Graphics2D g2 = (Graphics2D) g.create();
+	        g2.setColor(getBackground());
+	        g2.fill(new RoundRectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1, 15, 15));  // Adjust the radius here
+	        super.paintComponent(g);
+	        g2.dispose();
+    	}
+    }
 
 	private static class MyPanel extends JPanel {
 		private boolean racestart = false;
@@ -157,7 +230,10 @@ public class Racing {
 	private static JButton startButton;
 	private static JButton quitButton;
 
-	private static Color BURLYWOOD = new Color(222, 184, 135);
+	private static Color CELESTIAL = new Color(49, 151, 199);
+	private static Color HIGHLIGHT = new Color(110, 168, 195);
+	private static Color URANIAN = new Color(164, 210, 232);
+
 	private static int XOFFSET;
 	private static int YOFFSET;
 	private static int WINWIDTH;
