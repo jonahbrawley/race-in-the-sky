@@ -35,7 +35,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.event.*;
 import javax.swing.border.Border;
 
-
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 
@@ -58,6 +58,68 @@ public class Racing {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static class BackgroundMusic implements Runnable {
+		private String file = "menu.wav";
+
+		public BackgroundMusic() {}
+
+		public BackgroundMusic(String file) {
+			this.file = file;
+		}
+
+		public void play() {
+	        Thread t = new Thread(this);
+	        t.start();
+    	}
+
+    	public void run() {
+    		playSound(file);
+    	}
+
+    	private void playSound(String file) {
+    		File soundFile = new File(file);
+	        AudioInputStream audioInputStream = null;
+	        try {
+	            audioInputStream = AudioSystem.getAudioInputStream(soundFile);
+	        } 
+	        catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	        AudioFormat audioFormat = audioInputStream.getFormat();
+	        SourceDataLine line = null;
+	        DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
+	        try {
+	            line = (SourceDataLine) AudioSystem.getLine(info);
+	            line.open(audioFormat);
+	        } 
+	        catch (LineUnavailableException e) {
+	            e.printStackTrace();
+	        } 
+	        catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	        line.start();
+	        int nBytesRead = 0;
+	        byte[] abData = new byte[128000];
+	        while (nBytesRead != -1) {
+	            try 
+	            {
+	                nBytesRead = audioInputStream.read(abData, 0, abData.length);
+	            } 
+	            catch (IOException e) 
+	            {
+	                e.printStackTrace();
+	            }
+	            if (nBytesRead >= 0) 
+	            {
+	                int nBytesWritten = line.write(abData, 0, nBytesRead);
+	            }
+	        }
+	        line.drain();
+	        line.close();
+    	}
 	}
 
 	public static void main(String[] args) {
@@ -88,6 +150,9 @@ public class Racing {
 		myPanel.setBackground(CELESTIAL);
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
+
+		BackgroundMusic menu_theme = new BackgroundMusic("menu.wav");
+		menu_theme.play();
 	}
 
 	private static void setButtonAppearance(JButton button) {
