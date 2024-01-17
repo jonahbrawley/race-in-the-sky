@@ -35,7 +35,10 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.event.*;
 import javax.swing.border.Border;
 
-import javax.sound.sampled.*;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -80,45 +83,17 @@ public class Racing {
 
     	private void playSound(String file) {
     		File soundFile = new File(file);
-	        AudioInputStream audioInputStream = null;
-	        try {
-	            audioInputStream = AudioSystem.getAudioInputStream(soundFile);
+	        AudioInputStream inputStream = null;
+			
+	        try { // get input stream
+				Clip clip = AudioSystem.getClip();
+				inputStream = AudioSystem.getAudioInputStream(soundFile);
+				clip.open(inputStream);
+				clip.loop(Clip.LOOP_CONTINUOUSLY);
 	        } 
 	        catch (Exception e) {
 	            e.printStackTrace();
 	        }
-	        AudioFormat audioFormat = audioInputStream.getFormat();
-	        SourceDataLine line = null;
-	        DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
-	        try {
-	            line = (SourceDataLine) AudioSystem.getLine(info);
-	            line.open(audioFormat);
-	        } 
-	        catch (LineUnavailableException e) {
-	            e.printStackTrace();
-	        } 
-	        catch (Exception e) {
-	            e.printStackTrace();
-	        }
-	        line.start();
-	        int nBytesRead = 0;
-	        byte[] abData = new byte[128000];
-	        while (nBytesRead != -1) {
-	            try 
-	            {
-	                nBytesRead = audioInputStream.read(abData, 0, abData.length);
-	            } 
-	            catch (IOException e) 
-	            {
-	                e.printStackTrace();
-	            }
-	            if (nBytesRead >= 0) 
-	            {
-	                int nBytesWritten = line.write(abData, 0, nBytesRead);
-	            }
-	        }
-	        line.drain();
-	        line.close();
     	}
 	}
 
@@ -142,6 +117,7 @@ public class Racing {
 			myPanel.add(startButton, gbc);
 
 			gbc.insets = new Insets(10, 0, 0, 0);
+			
 			quitButton = new MyButton("QUIT");
 			quitButton.addActionListener(new QuitGame());
 			setButtonAppearance(quitButton);
