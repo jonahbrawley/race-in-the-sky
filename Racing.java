@@ -97,40 +97,6 @@ public class Racing {
     	}
 	}
 
-	public static void main(String[] args) {
-		setup();
-		appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		appFrame.setSize(WINWIDTH, WINHEIGHT);
-
-		JPanel myPanel = new MyPanel();
-		myPanel.setLayout(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridwidth = GridBagConstraints.REMAINDER;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-
-		gbc.ipady = 15;
-		gbc.ipadx = 50;
-
-			startButton = new MyButton("START RACE");
-			startButton.addActionListener(new StartGame((MyPanel) myPanel));
-			setButtonAppearance(startButton);
-			myPanel.add(startButton, gbc);
-
-			gbc.insets = new Insets(10, 0, 0, 0);
-			
-			quitButton = new MyButton("QUIT");
-			quitButton.addActionListener(new QuitGame());
-			setButtonAppearance(quitButton);
-			myPanel.add(quitButton, gbc);
-
-		myPanel.setBackground(CELESTIAL);
-		appFrame.getContentPane().add(myPanel, "Center");
-		appFrame.setVisible(true);
-
-		BackgroundMusic menu_theme = new BackgroundMusic("menu.wav");
-		menu_theme.play();
-	}
-
 	private static void setButtonAppearance(JButton button) {
 		button.setBorder(BorderFactory.createCompoundBorder(
 			new RoundBorder(15, URANIAN),
@@ -188,7 +154,7 @@ public class Racing {
         }
     }
 
-    private static class MyButton extends JButton {
+	private static class MyButton extends JButton {
     	public MyButton(String text) {
     		super(text);
     	}
@@ -221,6 +187,25 @@ public class Racing {
 	    }
 	}
 
+	private static class Animate implements Runnable {
+		public void run() {
+			while (endgame == false) {
+				appFrame.repaint();
+				try {
+					Thread.sleep(32);
+				} catch (InterruptedException e) {
+
+				}
+			}
+		}
+	}
+
+	private static void backgroundDraw() {
+		Graphics g = appFrame.getGraphics();
+		Graphics2D g2D = (Graphics2D) g;
+		g2D.drawImage(sunny_hill, XOFFSET, YOFFSET, null);
+	}
+
 	private static class StartGame implements ActionListener {
 		private final MyPanel panel;
 
@@ -246,23 +231,38 @@ public class Racing {
 		}
 	}
 
-	private static class Animate implements Runnable {
-		public void run() {
-			while (endgame == false) {
-				appFrame.repaint();
-				try {
-					Thread.sleep(32);
-				} catch (InterruptedException e) {
+	public static void main(String[] args) {
+		setup();
+		appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		appFrame.setSize(WINWIDTH, WINHEIGHT);
 
-				}
-			}
-		}
-	}
+		JPanel myPanel = new MyPanel();
+		myPanel.setLayout(new GridBagLayout());
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 
-	private static void backgroundDraw() {
-		Graphics g = appFrame.getGraphics();
-		Graphics2D g2D = (Graphics2D) g;
-		g2D.drawImage(sunny_hill, XOFFSET, YOFFSET, null);
+		gbc.ipady = 15;
+		gbc.ipadx = 50;
+
+			startButton = new MyButton("START RACE");
+			startButton.addActionListener(new StartGame((MyPanel) myPanel));
+			setButtonAppearance(startButton);
+			myPanel.add(startButton, gbc);
+
+			gbc.insets = new Insets(10, 0, 0, 0);
+			
+			quitButton = new MyButton("QUIT");
+			quitButton.addActionListener(new QuitGame());
+			setButtonAppearance(quitButton);
+			myPanel.add(quitButton, gbc);
+
+		myPanel.setBackground(CELESTIAL);
+		appFrame.getContentPane().add(myPanel, "Center");
+		appFrame.setVisible(true);
+
+		BackgroundMusic menu_theme = new BackgroundMusic("menu.wav");
+		menu_theme.play();
 	}
 
 	private static Boolean endgame;
