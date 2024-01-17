@@ -251,8 +251,9 @@ public class Racing {
 					}
 				}
 
-				// p1.move() here
-				// p1.screenWrap here
+				p1.move(-p1velocity * Math.cos(p1.getAngle() - Math.PI / 2.0),
+					p1velocity * Math.sin(p1.getAngle() - Math.PI / 2.0));
+				p1.screenWrap(XOFFSET, XOFFSET + WINWIDTH, YOFFSET, YOFFSET + WINHEIGHT);
 			}
 		}
 		private double velocitystep, rotatestep;
@@ -523,6 +524,8 @@ public class Racing {
 	private static double p1width, p1height, p1originalX, p1originalY, p1velocity;
 
 	private static JFrame appFrame;
+
+	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
 	private static BufferedImage sunny_hill, player1; // TODO: add player2
 }
