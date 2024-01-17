@@ -53,11 +53,17 @@ public class Racing {
 		YOFFSET = 0;
 		WINWIDTH = 1000;
 		WINHEIGHT = 800;
-		//pi = 3.14159265368979;
+
 		endgame = false;
 
-		try {
+		p1width = 30;
+		p1height = 30;
+		p1originalX = (double) XOFFSET + ((double) WINWIDTH / 2.0) - (p1width / 2.0);
+		p1originalY = (double) YOFFSET + ((double) WINHEIGHT / 2.0) - (p1height / 2.0);
+
+		try { // IO
 			sunny_hill = ImageIO.read( new File("sunny_hill.png") );
+			player1 = ImageIO.read( new File("car1.png") );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -190,7 +196,10 @@ public class Racing {
 	private static class Animate implements Runnable {
 		public void run() {
 			while (endgame == false) {
-				appFrame.repaint();
+				//appFrame.repaint();
+
+				playerDraw();
+
 				try {
 					Thread.sleep(32);
 				} catch (InterruptedException e) {
@@ -249,8 +258,11 @@ public class Racing {
 		private double velocitystep, rotatestep;
 	}
 	
-	// class responsible for creating image objects in-game
+	// moveable image objects
 	private static class ImageObject {
+		private double x, y, xwidth, yheight, angle, internalangle, comX, comY;
+		private Vector<Double> coords, triangles;
+
 		public ImageObject() {}
 
 		public ImageObject(double xinput, double yinput, double xwidthinput,
@@ -333,9 +345,15 @@ public class Racing {
 			return ret;
 		}
 
-		public void move(double xinput, double yinput) { x = x + xinput, y = y + yinput; }
+		public void move(double xinput, double yinput) {
+			x = x + xinput; 
+			y = y + yinput;
+		}
 
-		public void moveto(double xinput, double yinput) { x = xinput, y = yinput; }
+		public void moveto(double xinput, double yinput) {
+			x = xinput; 
+			y = yinput;
+		}
 
 		public void screenWrap(double leftEdge, double rightEdge, double topEdge, double bottomEdge) {
 			if (x > rightEdge) { moveto(leftEdge, getY()); }
@@ -346,7 +364,7 @@ public class Racing {
 
 		public void rotate(double input) {
 			angle = angle + input;
-			while (angle > twoPi) { angle = angle - (Math.PI*2); }
+			while (angle > (Math.PI*2)) { angle = angle - (Math.PI*2); }
 			while (angle < 0) { angle = angle + (Math.PI*2); }
 		}
 
@@ -355,9 +373,63 @@ public class Racing {
 			while (internalangle > (Math.PI*2)) { internalangle = internalangle - (Math.PI*2); }
 			while (internalangle < 0) { internalangle = internalangle + (Math.PI*2); }
 		}
+	}
 
-		private double x, y, xwidth, yheight, angle, internalangle, comX, comY;
-		private Vector<Double> coords, triangles;
+	// rotates ImageObject
+	private static AffineTransformOp rotateImageObject(ImageObject obj) {
+		AffineTransform at = AffineTransform.getRotateInstance(-obj.getAngle(),
+			obj.getWidth()/2.0, obj.getHeight()/2.0);
+		AffineTransformOp atop = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+		return atop;
+	}
+
+	// draws racecar graphic for p1 ImageObject
+	private static void playerDraw() {
+		Graphics g = appFrame.getGraphics();
+		Graphics2D g2D = (Graphics2D) g;
+		g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
+			(int)(p1.getY() + 0.5), null);
+	}
+
+	// initiates key actions from panel key responses
+	private static void bindKey(MyPanel panel, String input) {
+		panel.getInputMap(IFW).put(KeyStroke.getKeyStroke("pressed " + input), input + " pressed");
+		panel.getActionMap().put(input + " pressed", new KeyPressed(input));
+
+		panel.getInputMap(IFW).put(KeyStroke.getKeyStroke("released " + input), input + " released");
+		panel.getActionMap().put(input + " released", new KeyReleased(input));
+	}
+
+	// monitors keypresses
+	private static class KeyPressed extends AbstractAction {
+		public KeyPressed() { action = ""; }
+
+		public KeyPressed(String input) { action = input; }
+
+		public void actionPerformed(ActionEvent e) {
+			if (action.equals("UP")) { upPressed = true; }
+			if (action.equals("DOWN")) { downPressed = true; }
+			if (action.equals("LEFT")) { leftPressed = true; }
+			if (action.equals("RIGHT")) { rightPressed = true; }
+		}
+	
+		private String action;
+	}
+
+	// monitors keyreleases
+	private static class KeyReleased extends AbstractAction {
+		public KeyReleased() { action = ""; }
+
+		public KeyReleased(String input) { action = input; }
+
+		public void actionPerformed(ActionEvent e) {
+			if (action.equals("UP")) { upPressed = false; }
+			if (action.equals("DOWN")) { downPressed = false; }
+			if (action.equals("LEFT")) { leftPressed = false; }
+			if (action.equals("RIGHT")) { rightPressed = false; }
+		}
+
+		private String action;
 	}
 
 	private static class StartGame implements ActionListener {
@@ -367,15 +439,27 @@ public class Racing {
 			this.panel = panel;
 		}
 
-		public void actionPerformed(ActionEvent e) {
+		public void actionPerformed(ActionEvent ae) {
 			panel.startRace();
 			startButton.setVisible(false);
 			quitButton.setVisible(false);
 			endgame = true;
-			// actions here
+
+			upPressed = false;
+			downPressed = false;
+			leftPressed = false;
+			rightPressed = false;
+
+			p1 = new ImageObject(p1originalX, p1originalY, p1width, p1height, 0.0);
+			p1velocity = 0.0;
+
+			try { Thread.sleep(50); } catch (InterruptedException ie) { }
+
 			endgame = false;
-			Thread t1 = new Thread( new Animate());
+			Thread t1 = new Thread( new Animate() );
+			Thread t2 = new Thread( new PlayerMover() );
 			t1.start();
+			t2.start();
 		}
 	}
 
@@ -411,6 +495,11 @@ public class Racing {
 			setButtonAppearance(quitButton);
 			myPanel.add(quitButton, gbc);
 
+			bindKey((MyPanel) myPanel, "UP");
+			bindKey((MyPanel) myPanel, "DOWN");
+			bindKey((MyPanel) myPanel, "LEFT");
+			bindKey((MyPanel) myPanel, "RIGHT");
+
 		myPanel.setBackground(CELESTIAL);
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
@@ -420,6 +509,7 @@ public class Racing {
 	}
 
 	private static Boolean endgame, racestart;
+	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
 
 	private static JButton startButton, quitButton;
 
@@ -434,5 +524,5 @@ public class Racing {
 
 	private static JFrame appFrame;
 
-	private static BufferedImage sunny_hill;
+	private static BufferedImage sunny_hill, player1; // TODO: add player2
 }
