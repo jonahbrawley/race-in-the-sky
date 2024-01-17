@@ -53,7 +53,7 @@ public class Racing {
 		YOFFSET = 0;
 		WINWIDTH = 1000;
 		WINHEIGHT = 800;
-		pi = 3.14159265368979;
+		//pi = 3.14159265368979;
 		endgame = false;
 
 		try {
@@ -205,6 +205,160 @@ public class Racing {
 		Graphics2D g2D = (Graphics2D) g;
 		g2D.drawImage(sunny_hill, XOFFSET, YOFFSET, null);
 	}
+	
+	// thread responsible for updating player movement
+	private static class PlayerMover implements Runnable {
+		public PlayerMover() {
+			velocitystep = 0.01;
+			rotatestep = 0.01;
+		}
+
+		public void run() {
+			while (endgame == false) {
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+
+				}
+
+				if (upPressed == true) {
+					p1velocity = p1velocity + velocitystep;
+				}
+				if (downPressed == true) {
+					p1velocity = p1velocity - velocitystep;
+				}
+				if (leftPressed == true) {
+					if (p1velocity < 0) {
+						p1.rotate(-rotatestep);
+					} else {
+						p1.rotate(rotatestep);
+					}
+				}
+				if (rightPressed == true) {
+					if (p1velocity < 0) {
+						p1.rotate(rotatestep);
+					} else {
+						p1.rotate(-rotatestep);
+					}
+				}
+
+				// p1.move() here
+				// p1.screenWrap here
+			}
+		}
+		private double velocitystep, rotatestep;
+	}
+	
+	// class responsible for creating image objects in-game
+	private static class ImageObject {
+		public ImageObject() {}
+
+		public ImageObject(double xinput, double yinput, double xwidthinput,
+			double yheightinput, double angleinput) {
+			x = xinput;
+			y = yinput;
+			xwidth = xwidthinput;
+			yheight = yheightinput;
+			angle = angleinput;
+			internalangle = 0.0;
+			coords = new Vector<Double>();
+		}
+
+		public double getX() { return x; }
+
+		public double getY() { return y; }
+
+		public double getWidth() { return xwidth; }
+
+		public double getHeight() { return yheight; }
+
+		public double getAngle() { return angle; }
+
+		public double getInternalAngle() { return internalangle; }
+
+		public void setAngle(double angleinput) { angle = angleinput; }
+
+		public void setInternalAngle(double input) { internalangle = input; }
+
+		public Vector<Double> getCoords() { return coords; }
+
+		public void setCoords(Vector<Double> input) {
+			coords = input;
+			generateTriangles();
+		}
+
+		public void generateTriangles() {
+			triangles = new Vector<Double>();
+			// format: (0, 1), (2, 3), (4, 5) is x,y coords of triangle
+
+			// get center point of all coords
+			comX = getComX();
+			comY = getComY();
+
+			for (int i=0; i<coords.size(); i=i+2) {
+				triangles.addElement(coords.elementAt(i));
+				triangles.addElement(coords.elementAt(i+1));
+
+				triangles.addElement(coords.elementAt( (i+2) % coords.size() ));
+				triangles.addElement(coords.elementAt( (i+3) % coords.size() ));
+
+				triangles.addElement(comX);
+				triangles.addElement(comY);
+			}
+		}
+
+		public void printTriangles() {
+			for (int i=0; i < triangles.size(); i=i+6) {
+				System.out.print("p0x: " + triangles.elementAt(i) + ", p0y " + triangles.elementAt(i+1));
+				System.out.print(" p1x: " + triangles.elementAt(i+2) + ", p1y: " + triangles.elementAt(i+3));
+				System.out.println(" p2x: " + triangles.elementAt(i+4) + ", p2y: " + triangles.elementAt(i+5));
+			}
+		}
+
+		public double getComX() {
+			double ret = 0;
+			if (coords.size() > 0) {
+				for (int i=0; i<coords.size(); i=i+2) { ret = ret + coords.elementAt(i); }
+				ret = ret / (coords.size() / 2.0);
+			}
+			return ret;
+		}
+
+		public double getComY() {
+			double ret = 0;
+			if (coords.size() > 0) {
+				for (int i=1; i<coords.size(); i=i+2) { ret = ret + coords.elementAt(i); }
+				ret = ret / (coords.size() / 2.0);
+			}
+			return ret;
+		}
+
+		public void move(double xinput, double yinput) { x = x + xinput, y = y + yinput; }
+
+		public void moveto(double xinput, double yinput) { x = xinput, y = yinput; }
+
+		public void screenWrap(double leftEdge, double rightEdge, double topEdge, double bottomEdge) {
+			if (x > rightEdge) { moveto(leftEdge, getY()); }
+			if (x < leftEdge) { moveto(rightEdge, getY()); }
+			if (y > bottomEdge) { moveto(getX(), topEdge); }
+			if (y < topEdge) { moveto(getX(), bottomEdge); }
+		}
+
+		public void rotate(double input) {
+			angle = angle + input;
+			while (angle > twoPi) { angle = angle - (Math.PI*2); }
+			while (angle < 0) { angle = angle + (Math.PI*2); }
+		}
+
+		public void spin(double input) {
+			internalangle = internalangle + input;
+			while (internalangle > (Math.PI*2)) { internalangle = internalangle - (Math.PI*2); }
+			while (internalangle < 0) { internalangle = internalangle + (Math.PI*2); }
+		}
+
+		private double x, y, xwidth, yheight, angle, internalangle, comX, comY;
+		private Vector<Double> coords, triangles;
+	}
 
 	private static class StartGame implements ActionListener {
 		private final MyPanel panel;
@@ -265,22 +419,18 @@ public class Racing {
 		menu_theme.play();
 	}
 
-	private static Boolean endgame;
-	private static Boolean racestart;
+	private static Boolean endgame, racestart;
 
-	private static JButton startButton;
-	private static JButton quitButton;
+	private static JButton startButton, quitButton;
 
 	private static Color CELESTIAL = new Color(49, 151, 199);
 	private static Color HIGHLIGHT = new Color(110, 168, 195);
 	private static Color URANIAN = new Color(164, 210, 232);
 
-	private static int XOFFSET;
-	private static int YOFFSET;
-	private static int WINWIDTH;
-	private static int WINHEIGHT;
+	private static int XOFFSET, YOFFSET, WINWIDTH, WINHEIGHT;
 
-	private static double pi;
+	private static ImageObject p1, p2; // player1 and player2 racecar object
+	private static double p1width, p1height, p1originalX, p1originalY, p1velocity;
 
 	private static JFrame appFrame;
 
