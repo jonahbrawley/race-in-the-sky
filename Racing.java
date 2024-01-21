@@ -59,8 +59,8 @@ public class Racing {
 
 		p1width = 30;
 		p1height = 30;
-		p1originalX = (double) XOFFSET + ((double) WINWIDTH / 2.0) - (p1width / 2.0);
-		p1originalY = (double) YOFFSET + ((double) WINHEIGHT / 2.0) - (p1height / 2.0);
+		p1originalX = (double) XOFFSET + ((double) WINWIDTH / 2.15) - (p1width / 2.0);
+		p1originalY = (double) YOFFSET + ((double) WINHEIGHT / 1.15) - (p1height / 2.0);
 
 		try { // IO
 			sunny_hill = ImageIO.read( new File("sunny_hill.png") );
@@ -210,7 +210,7 @@ public class Racing {
 		public PlayerMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
-			maxvelocity = 5;
+			maxvelocity = 2;
 			brakingforce = 0.02;
 		}
 
@@ -226,7 +226,6 @@ public class Racing {
 					} else if (p1velocity >= maxvelocity) { // ensure max vel not exceeded
 						p1velocity = maxvelocity;
 					}
-					
 				}
 				if (downPressed == true) {
 					if (p1velocity < -1) { // ensure max rev speed
@@ -247,6 +246,16 @@ public class Racing {
 						p1.rotate(rotatestep);
 					} else {
 						p1.rotate(-rotatestep);
+					}
+				}
+
+				// apply drag force
+				if (!upPressed && !downPressed && !leftPressed && !rightPressed
+					&& p1velocity != 0) {
+					if ((p1velocity - 0.1) < 0) {
+						p1velocity = 0;
+					} else {
+						p1velocity = p1velocity - 0.04; 
 					}
 				}
 
