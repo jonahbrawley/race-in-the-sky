@@ -13,6 +13,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JComboBox;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferStrategy;
 import java.awt.image.ImageObserver;
 import javax.imageio.ImageIO;
 import java.io.IOException;
@@ -175,30 +176,25 @@ public class Racing {
     	}
     }
 
-	private static class MyPanel extends JPanel {
-		private boolean racestart = false;
-
-	    @Override
-	    protected void paintComponent(Graphics g) {
-	        super.paintComponent(g);
-	        if (racestart) {
-	        	Graphics2D g2D = (Graphics2D) g;
-	        	g2D.drawImage(sunny_hill, XOFFSET, YOFFSET, null);
-	        }
-	    }
-
-	    public void startRace() {
-	    	racestart = true;
-	    	repaint();
-	    }
-	}
-
 	private static class Animate implements Runnable {
 		public void run() {
-			while (endgame == false) {
-				//appFrame.repaint();
+			bs = appFrame.getBufferStrategy();
+		    if (bs == null){
+			    appFrame.createBufferStrategy(3);
+			    return;
+		    }
 
-				playerDraw();
+			while (!endgame) {
+				Graphics g = bs.getDrawGraphics();
+				Graphics2D g2D = (Graphics2D) g;
+
+				g2D.drawImage(sunny_hill, XOFFSET, YOFFSET, null);
+				g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
+					(int)(p1.getY() + 0.5), null);
+
+				g2D.dispose(); // dispose old objects
+				g.dispose();
+				bs.show();
 
 				try {
 					Thread.sleep(32);
@@ -207,12 +203,6 @@ public class Racing {
 				}
 			}
 		}
-	}
-
-	private static void backgroundDraw() {
-		Graphics g = appFrame.getGraphics();
-		Graphics2D g2D = (Graphics2D) g;
-		g2D.drawImage(sunny_hill, XOFFSET, YOFFSET, null);
 	}
 	
 	// thread responsible for updating player movement
@@ -223,7 +213,7 @@ public class Racing {
 		}
 
 		public void run() {
-			while (endgame == false) {
+			while (!endgame) {
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) {
@@ -384,16 +374,8 @@ public class Racing {
 		return atop;
 	}
 
-	// draws racecar graphic for p1 ImageObject
-	private static void playerDraw() {
-		Graphics g = appFrame.getGraphics();
-		Graphics2D g2D = (Graphics2D) g;
-		g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
-			(int)(p1.getY() + 0.5), null);
-	}
-
 	// initiates key actions from panel key responses
-	private static void bindKey(MyPanel panel, String input) {
+	private static void bindKey(JPanel panel, String input) {
 		panel.getInputMap(IFW).put(KeyStroke.getKeyStroke("pressed " + input), input + " pressed");
 		panel.getActionMap().put(input + " pressed", new KeyPressed(input));
 
@@ -434,14 +416,13 @@ public class Racing {
 	}
 
 	private static class StartGame implements ActionListener {
-		private final MyPanel panel;
+		private final JPanel panel;
 
-		public StartGame(MyPanel panel) {
+		public StartGame(JPanel panel) {
 			this.panel = panel;
 		}
 
 		public void actionPerformed(ActionEvent ae) {
-			panel.startRace();
 			startButton.setVisible(false);
 			quitButton.setVisible(false);
 			endgame = true;
@@ -475,7 +456,7 @@ public class Racing {
 		appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		appFrame.setSize(WINWIDTH, WINHEIGHT);
 
-		JPanel myPanel = new MyPanel();
+		JPanel myPanel = new JPanel();
 		myPanel.setLayout(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -485,7 +466,7 @@ public class Racing {
 		gbc.ipadx = 50;
 
 			startButton = new MyButton("START RACE");
-			startButton.addActionListener(new StartGame((MyPanel) myPanel));
+			startButton.addActionListener(new StartGame(myPanel));
 			setButtonAppearance(startButton);
 			myPanel.add(startButton, gbc);
 
@@ -496,20 +477,22 @@ public class Racing {
 			setButtonAppearance(quitButton);
 			myPanel.add(quitButton, gbc);
 
-			bindKey((MyPanel) myPanel, "UP");
-			bindKey((MyPanel) myPanel, "DOWN");
-			bindKey((MyPanel) myPanel, "LEFT");
-			bindKey((MyPanel) myPanel, "RIGHT");
+			bindKey(myPanel, "UP");
+			bindKey(myPanel, "DOWN");
+			bindKey(myPanel, "LEFT");
+			bindKey(myPanel, "RIGHT");
 
 		myPanel.setBackground(CELESTIAL);
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
 
+		
+
 		BackgroundMusic menu_theme = new BackgroundMusic("menu.wav");
 		menu_theme.play();
 	}
 
-	private static Boolean endgame, racestart;
+	private static Boolean endgame;
 	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
 
 	private static JButton startButton, quitButton;
@@ -527,5 +510,6 @@ public class Racing {
 
 	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
+	private static BufferStrategy bs;
 	private static BufferedImage sunny_hill, player1; // TODO: add player2
 }
