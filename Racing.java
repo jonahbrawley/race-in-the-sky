@@ -208,23 +208,32 @@ public class Racing {
 	// thread responsible for updating player movement
 	private static class PlayerMover implements Runnable {
 		public PlayerMover() {
-			velocitystep = 0.01;
-			rotatestep = 0.01;
+			velocitystep = 0.02; // aka accel
+			rotatestep = 0.03;
+			maxvelocity = 5;
+			brakingforce = 0.02;
 		}
 
 		public void run() {
 			while (!endgame) {
 				try {
 					Thread.sleep(10);
-				} catch (InterruptedException e) {
-
-				}
+				} catch (InterruptedException e) { }
 
 				if (upPressed == true) {
-					p1velocity = p1velocity + velocitystep;
+					if (p1velocity < maxvelocity) {
+						p1velocity = (p1velocity) + velocitystep;
+					} else if (p1velocity >= maxvelocity) { // ensure max vel not exceeded
+						p1velocity = maxvelocity;
+					}
+					
 				}
 				if (downPressed == true) {
-					p1velocity = p1velocity - velocitystep;
+					if (p1velocity < -1) { // ensure max rev speed
+						p1velocity = -1;
+					} else {
+						p1velocity = p1velocity - brakingforce;
+					}
 				}
 				if (leftPressed == true) {
 					if (p1velocity < 0) {
@@ -246,7 +255,7 @@ public class Racing {
 				p1.screenWrap(XOFFSET, XOFFSET + WINWIDTH, YOFFSET, YOFFSET + WINHEIGHT);
 			}
 		}
-		private double velocitystep, rotatestep;
+		private double velocitystep, rotatestep, maxvelocity, brakingforce;
 	}
 	
 	// moveable image objects
