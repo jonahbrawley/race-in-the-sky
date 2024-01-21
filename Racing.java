@@ -180,7 +180,7 @@ public class Racing {
 		public void run() {
 			bs = appFrame.getBufferStrategy();
 		    if (bs == null){
-			    appFrame.createBufferStrategy(3);
+			    appFrame.createBufferStrategy(2);
 			    return;
 		    }
 
