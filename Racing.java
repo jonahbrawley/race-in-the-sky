@@ -252,7 +252,7 @@ public class Racing {
 
 				p1.move(-p1velocity * Math.cos(p1.getAngle() - Math.PI / 2.0),
 					p1velocity * Math.sin(p1.getAngle() - Math.PI / 2.0));
-				p1.screenWrap(XOFFSET, XOFFSET + WINWIDTH, YOFFSET, YOFFSET + WINHEIGHT);
+				p1.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT);
 			}
 		}
 		private double velocitystep, rotatestep, maxvelocity, brakingforce;
@@ -355,11 +355,23 @@ public class Racing {
 			y = yinput;
 		}
 
-		public void screenWrap(double leftEdge, double rightEdge, double topEdge, double bottomEdge) {
-			if (x > rightEdge) { moveto(leftEdge, getY()); }
-			if (x < leftEdge) { moveto(rightEdge, getY()); }
-			if (y > bottomEdge) { moveto(getX(), topEdge); }
-			if (y < topEdge) { moveto(getX(), bottomEdge); }
+		public void screenBounds(double leftEdge, double rightEdge, double topEdge, double bottomEdge) {
+			if (x < leftEdge) { 
+				moveto(leftEdge, getY());
+				p1velocity = p1velocity*0.9;
+			}
+			if (x + getWidth() > rightEdge) { 
+				moveto(rightEdge - getWidth(), getY()); 
+				p1velocity = p1velocity*0.9;
+			}
+			if (y < topEdge) { 
+				moveto(getX(), topEdge); 
+				p1velocity = p1velocity*0.9;
+			}
+			if (y + getHeight() > bottomEdge) { 
+				moveto(getX(), bottomEdge - getHeight()); 
+				p1velocity = p1velocity*0.9;
+			}
 		}
 
 		public void rotate(double input) {
