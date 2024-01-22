@@ -63,8 +63,9 @@ public class Racing {
 		p1originalY = (double) YOFFSET + ((double) WINHEIGHT / 1.15) - (p1height / 2.0);
 
 		try { // IO
-			sunny_hill = ImageIO.read( new File("sunny_hill.png") );
 			player1 = ImageIO.read( new File("car1.png") );
+			sunny_hill_dirt = ImageIO.read( new File("sunny_hill/dirt.png") );
+			sunny_hill_grass = ImageIO.read( new File("sunny_hill/grass.png") );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -188,7 +189,10 @@ public class Racing {
 				Graphics g = bs.getDrawGraphics();
 				Graphics2D g2D = (Graphics2D) g;
 
-				g2D.drawImage(sunny_hill, XOFFSET, YOFFSET, null);
+				// draw track
+				g2D.drawImage(sunny_hill_grass, XOFFSET, YOFFSET, null);
+				g2D.drawImage(sunny_hill_dirt, XOFFSET, YOFFSET, null);
+
 				g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
 					(int)(p1.getY() + 0.5), null);
 
@@ -219,6 +223,12 @@ public class Racing {
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) { }
+
+				if (isCollidingWithGrass(p1.getX(), p1.getY(), sunny_hill_grass)) {
+					maxvelocity = 0.8;
+				} else {
+					maxvelocity = 2;
+				}
 
 				if (upPressed == true) {
 					if (p1velocity < maxvelocity) {
@@ -265,6 +275,12 @@ public class Racing {
 			}
 		}
 		private double velocitystep, rotatestep, maxvelocity, brakingforce;
+	}
+
+	private static boolean isCollidingWithGrass(double carX, double carY, BufferedImage grass) {
+		 int pixelColor = grass.getRGB((int) carX, (int) carY);
+
+		 return (pixelColor & 0xFF000000) != 0;
 	}
 	
 	// moveable image objects
@@ -541,5 +557,5 @@ public class Racing {
 	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
 	private static BufferStrategy bs;
-	private static BufferedImage sunny_hill, player1; // TODO: add player2
+	private static BufferedImage sunny_hill_dirt, sunny_hill_grass, player1; // TODO: add player2
 }
