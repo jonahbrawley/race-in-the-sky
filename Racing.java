@@ -66,6 +66,8 @@ public class Racing {
 			player1 = ImageIO.read( new File("car1.png") );
 			sunny_hill_dirt = ImageIO.read( new File("sunny_hill/dirt.png") );
 			sunny_hill_grass = ImageIO.read( new File("sunny_hill/grass.png") );
+			sunny_hill_tunnel_shadow = ImageIO.read( new File("sunny_hill/tunnel_shadow.png") );
+			sunny_hill_tunnel = ImageIO.read( new File("sunny_hill/tunnel.png") );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -180,7 +182,7 @@ public class Racing {
 	private static class Animate implements Runnable {
 		public void run() {
 			bs = appFrame.getBufferStrategy();
-		    if (bs == null){
+		    if (bs == null) {
 			    appFrame.createBufferStrategy(2);
 			    return;
 		    }
@@ -192,9 +194,13 @@ public class Racing {
 				// draw track
 				g2D.drawImage(sunny_hill_grass, XOFFSET, YOFFSET, null);
 				g2D.drawImage(sunny_hill_dirt, XOFFSET, YOFFSET, null);
+				g2D.drawImage(sunny_hill_tunnel_shadow, XOFFSET, YOFFSET, null);
+				g2D.drawImage(sunny_hill_tunnel, XOFFSET, YOFFSET, null);
 
 				g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
 					(int)(p1.getY() + 0.5), null);
+
+				//System.out.println(p1.getX() + " " + p1.getY());
 
 				g2D.dispose(); // dispose old objects
 				g.dispose();
@@ -282,6 +288,10 @@ public class Racing {
 
 		 return (pixelColor & 0xFF000000) != 0;
 	}
+
+	// private static boolean shouldGoUnderTunnel(double carX, double carY) {
+
+	// }
 	
 	// moveable image objects
 	private static class ImageObject {
@@ -540,6 +550,7 @@ public class Racing {
 
 	private static Boolean endgame;
 	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
+	private static Boolean tunnelCover;
 
 	private static JButton startButton, quitButton;
 
@@ -557,5 +568,7 @@ public class Racing {
 	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
 	private static BufferStrategy bs;
-	private static BufferedImage sunny_hill_dirt, sunny_hill_grass, player1; // TODO: add player2
+	private static BufferedImage sunny_hill_dirt, sunny_hill_grass;
+	private static BufferedImage sunny_hill_tunnel, sunny_hill_tunnel_shadow; 
+	private static BufferedImage player1; // TODO: add player2
 }
