@@ -43,12 +43,6 @@ public class Racing {
 		p1originalY = (double) YOFFSET + ((double) WINHEIGHT / 1.15) - (p1height / 2.0);
 
 		try { // IO
-			// player1 = ImageIO.read(Racing.class.getResourceAsStream("car1.png"));
-			// sunny_hill_dirt = ImageIO.read(Racing.class.getResourceAsStream("sunny_hill" + File.separator + "dirt.png"));
-			// sunny_hill_grass = ImageIO.read(Racing.class.getResourceAsStream("sunny_hill" + File.separator + "grass.png"));
-			// sunny_hill_tunnel = ImageIO.read(Racing.class.getResourceAsStream("sunny_hill" + File.separator + "tunnel.png"));
-			// sunny_hill_tunnel_shadow = ImageIO.read(Racing.class.getResourceAsStream("sunny_hill" + File.separator + "tunnel_shadow.png"));
-
 			player1 = ImageIO.read( new File("car1.png") );
 			sunny_hill_dirt = ImageIO.read( new File("sunny_hill" + File.separator + "dirt.png") );
 			sunny_hill_grass = ImageIO.read( new File("sunny_hill" + File.separator + "grass.png") );
@@ -167,8 +161,6 @@ public class Racing {
 
 	private static class Animate implements Runnable {
 		public void run() {
-			bs = appFrame.getBufferStrategy();
-
 			while (!endgame) {
 				Graphics g = bs.getDrawGraphics();
 				Graphics2D g2D = (Graphics2D) g;
@@ -179,7 +171,7 @@ public class Racing {
 				g2D.drawImage(sunny_hill_tunnel_shadow, XOFFSET, YOFFSET, null);
 				g2D.drawImage(sunny_hill_tunnel, XOFFSET, YOFFSET, null);
 
-				g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
+				g.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
 					(int)(p1.getY() + 0.5), null);
 
 				//System.out.println(p1.getX() + " " + p1.getY());
@@ -195,12 +187,6 @@ public class Racing {
 				}
 			}
 		}
-
-		// @Override
-		// public void actionPerformed(ActionEvent e) {
-		// 	super.actionPerformed();
-		// 	repaint();
-		// }
 	}
 	
 	// thread responsible for updating player movement
@@ -530,6 +516,7 @@ public class Racing {
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
 		appFrame.createBufferStrategy(2);
+		bs = appFrame.getBufferStrategy();
 		
 		BackgroundMusic menu_theme = new BackgroundMusic("menu.wav");
 		menu_theme.play();
