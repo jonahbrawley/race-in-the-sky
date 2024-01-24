@@ -44,10 +44,9 @@ public class Racing {
 
 		try { // IO
 			player1 = ImageIO.read( new File("car1.png") );
-			sunny_hill_dirt = ImageIO.read( new File("sunny_hill" + File.separator + "dirt.png") );
-			sunny_hill_grass = ImageIO.read( new File("sunny_hill" + File.separator + "grass.png") );
-			sunny_hill_tunnel_shadow = ImageIO.read( new File("sunny_hill" + File.separator + "tunnel_shadow.png") );
-			sunny_hill_tunnel = ImageIO.read( new File("sunny_hill" + File.separator + "tunnel.png") );
+			sky = ImageIO.read( new File("cloud_track" + File.separator + "sky.png") );
+			dirt = ImageIO.read( new File("cloud_track" + File.separator + "dirt.png") );
+			track = ImageIO.read( new File("cloud_track" + File.separator + "track.png") );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -166,15 +165,14 @@ public class Racing {
 				Graphics2D g2D = (Graphics2D) g;
 
 				// draw track
-				g2D.drawImage(sunny_hill_grass, XOFFSET, YOFFSET, null);
-				g2D.drawImage(sunny_hill_dirt, XOFFSET, YOFFSET, null);
-				g2D.drawImage(sunny_hill_tunnel_shadow, XOFFSET, YOFFSET, null);
-				g2D.drawImage(sunny_hill_tunnel, XOFFSET, YOFFSET, null);
+				g2D.drawImage(sky, XOFFSET, YOFFSET, null);
+				g2D.drawImage(dirt, XOFFSET, YOFFSET, null);
+				g2D.drawImage(track, XOFFSET, YOFFSET, null);
 
-				g.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
+				g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
 					(int)(p1.getY() + 0.5), null);
 
-				//System.out.println(p1.getX() + " " + p1.getY());
+				System.out.println(p1.getX() + " " + p1.getY());
 
 				g2D.dispose(); // dispose old objects
 				g.dispose();
@@ -204,7 +202,7 @@ public class Racing {
 					Thread.sleep(10);
 				} catch (InterruptedException e) { }
 
-				if (isCollidingWithGrass(p1.getX(), p1.getY(), sunny_hill_grass)) {
+				if (isCollidingWithDirt(p1.getX(), p1.getY(), dirt)) {
 					maxvelocity = 0.8;
 				} else {
 					maxvelocity = 2;
@@ -257,8 +255,8 @@ public class Racing {
 		private double velocitystep, rotatestep, maxvelocity, brakingforce;
 	}
 
-	private static boolean isCollidingWithGrass(double carX, double carY, BufferedImage grass) {
-		 int pixelColor = grass.getRGB((int) carX, (int) carY);
+	private static boolean isCollidingWithDirt(double carX, double carY, BufferedImage img) {
+		 int pixelColor = img.getRGB((int) carX, (int) carY);
 
 		 return (pixelColor & 0xFF000000) != 0;
 	}
@@ -542,7 +540,6 @@ public class Racing {
 	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
 	private static BufferStrategy bs;
-	private static BufferedImage sunny_hill_dirt, sunny_hill_grass;
-	private static BufferedImage sunny_hill_tunnel, sunny_hill_tunnel_shadow; 
+	private static BufferedImage sky, dirt, track;
 	private static BufferedImage player1; // TODO: add player2
 }
