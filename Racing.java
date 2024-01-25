@@ -3,35 +3,14 @@ import java.util.Random;
 
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
-import javax.swing.AbstractAction;
-import javax.swing.JComboBox;
-
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferStrategy;
 import java.awt.image.ImageObserver;
 import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.File;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
-
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
-import java.awt.Color;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.event.*;
 import javax.swing.border.Border;
@@ -40,6 +19,7 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
+import javax.swing.SwingUtilities;
 import javax.swing.*;
 import java.awt.*;
 
@@ -63,11 +43,17 @@ public class Racing {
 		p1originalY = (double) YOFFSET + ((double) WINHEIGHT / 1.15) - (p1height / 2.0);
 
 		try { // IO
+			// player1 = ImageIO.read(Racing.class.getResourceAsStream("car1.png"));
+			// sunny_hill_dirt = ImageIO.read(Racing.class.getResourceAsStream("sunny_hill" + File.separator + "dirt.png"));
+			// sunny_hill_grass = ImageIO.read(Racing.class.getResourceAsStream("sunny_hill" + File.separator + "grass.png"));
+			// sunny_hill_tunnel = ImageIO.read(Racing.class.getResourceAsStream("sunny_hill" + File.separator + "tunnel.png"));
+			// sunny_hill_tunnel_shadow = ImageIO.read(Racing.class.getResourceAsStream("sunny_hill" + File.separator + "tunnel_shadow.png"));
+
 			player1 = ImageIO.read( new File("car1.png") );
-			sunny_hill_dirt = ImageIO.read( new File("sunny_hill/dirt.png") );
-			sunny_hill_grass = ImageIO.read( new File("sunny_hill/grass.png") );
-			sunny_hill_tunnel_shadow = ImageIO.read( new File("sunny_hill/tunnel_shadow.png") );
-			sunny_hill_tunnel = ImageIO.read( new File("sunny_hill/tunnel.png") );
+			sunny_hill_dirt = ImageIO.read( new File("sunny_hill" + File.separator + "dirt.png") );
+			sunny_hill_grass = ImageIO.read( new File("sunny_hill" + File.separator + "grass.png") );
+			sunny_hill_tunnel_shadow = ImageIO.read( new File("sunny_hill" + File.separator + "tunnel_shadow.png") );
+			sunny_hill_tunnel = ImageIO.read( new File("sunny_hill" + File.separator + "tunnel.png") );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -182,10 +168,6 @@ public class Racing {
 	private static class Animate implements Runnable {
 		public void run() {
 			bs = appFrame.getBufferStrategy();
-		    if (bs == null) {
-			    appFrame.createBufferStrategy(2);
-			    return;
-		    }
 
 			while (!endgame) {
 				Graphics g = bs.getDrawGraphics();
@@ -213,6 +195,12 @@ public class Racing {
 				}
 			}
 		}
+
+		// @Override
+		// public void actionPerformed(ActionEvent e) {
+		// 	super.actionPerformed();
+		// 	repaint();
+		// }
 	}
 	
 	// thread responsible for updating player movement
@@ -541,9 +529,8 @@ public class Racing {
 		myPanel.setBackground(CELESTIAL);
 		appFrame.getContentPane().add(myPanel, "Center");
 		appFrame.setVisible(true);
-
+		appFrame.createBufferStrategy(2);
 		
-
 		BackgroundMusic menu_theme = new BackgroundMusic("menu.wav");
 		menu_theme.play();
 	}
