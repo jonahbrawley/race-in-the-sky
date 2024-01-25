@@ -118,8 +118,8 @@ public class Racing {
 			try { Thread.sleep(50); } catch (InterruptedException ie) { }
 
 			endgame = false;
-			gamePanel.startAnimation();
 			gamePanel.setGameActive(true);
+			gamePanel.startAnimation();
 
 			Thread t1 = new Thread( new PlayerMover() );
 			t1.start();
@@ -133,35 +133,6 @@ public class Racing {
 	}
 
 	// -------- ANIMATION AND MOVEMENT --------
-	private static class Animate implements Runnable {
-		public void run() {
-			while (!endgame) {
-				Graphics g = bs.getDrawGraphics();
-				Graphics2D g2D = (Graphics2D) g;
-
-				// draw track
-				g2D.drawImage(sky, XOFFSET, YOFFSET, null);
-				g2D.drawImage(dirt, XOFFSET, YOFFSET, null);
-				g2D.drawImage(track, XOFFSET, YOFFSET, null);
-
-				g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
-					(int)(p1.getY() + 0.5), null);
-
-				//System.out.println(p1.getX() + " " + p1.getY());
-
-				g2D.dispose(); // dispose old objects
-				g.dispose();
-				bs.show();
-
-				try {
-					Thread.sleep(32);
-				} catch (InterruptedException e) {
-
-				}
-			}
-		}
-	}
-
 	public static class GamePanel extends JPanel {
 		private Timer timer;
 		private boolean gameActive;
