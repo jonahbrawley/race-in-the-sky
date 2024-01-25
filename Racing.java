@@ -160,8 +160,10 @@ public class Racing {
 				g2D.drawImage(dirt, XOFFSET, YOFFSET, null);
 				g2D.drawImage(track, XOFFSET, YOFFSET, null);
 
-				g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
+				if (!p1dead) {
+					g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
 					(int)(p1.getY() + 0.5), null);
+				}
 
 				g2D.dispose();
 			}
@@ -197,12 +199,20 @@ public class Racing {
 					maxvelocity = 2;
 				}
 
-				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !fallRecentlyPlayed) {
+				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !fallRecentlyPlayed) { // play fall sound
 					// wait 3 sec, but do not pause rest of execution
 					fallSound.play();
 					fallRecentlyPlayed = true;
 					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
                 	scheduler.schedule(() -> fallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
+				}
+
+				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky)) {
+					p1dead = true;
+					try { Thread.sleep(3000); } catch (InterruptedException e) { }
+					p1velocity = 0;
+					placePlayerOnNearestTrack(p1, track);
+					p1dead = false;
 				}
 
 				if (upPressed == true) {
@@ -256,6 +266,33 @@ public class Racing {
 		 int pixelColor = img.getRGB((int) carX, (int) carY);
 
 		 return (pixelColor & 0xFF000000) != 0;
+	}
+
+	private static void placePlayerOnNearestTrack(ImageObject p1, BufferedImage currentTrackStrip) {
+		double playerX = p1.getX();
+		double playerY = p1.getY();
+
+		// calculate the distances to each non-transparent pixel and find the nearest one
+	    double nearestDistance = Double.MAX_VALUE;
+	    int nearestPixelX = 0;
+	    int nearestPixelY = 0;
+
+	    for (int x = 0; x < currentTrackStrip.getWidth(); x++) {
+	        for (int y = 0; y < currentTrackStrip.getHeight(); y++) {
+	            if ((currentTrackStrip.getRGB(x, y) & 0xFF000000) != 0) {
+	                double distance = calculateDistance(playerX, playerY, x, y);
+
+	                // Check if this pixel is closer than the previous nearest one
+	                if (distance < nearestDistance) {
+	                    nearestDistance = distance;
+	                    nearestPixelX = x;
+	                    nearestPixelY = y;
+	                }
+	            }
+	        }
+	    }
+
+	    p1.moveto(nearestPixelX, nearestPixelY);
 	}
 
 	// initiates key actions from panel key responses
@@ -549,10 +586,16 @@ public class Racing {
 		return atop;
 	}
 
+	private static double calculateDistance(double x1, double y1, double x2, double y2) {
+	    // Calculate Euclidean distance between two points
+	    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+	}
+
 	// -------- GLOBAL VARIABLES --------
 	private static Boolean endgame;
 	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
 	private static Boolean fallRecentlyPlayed = false;
+	private static Boolean p1dead = false;
 
 	private static JButton startButton, quitButton;
 
