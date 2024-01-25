@@ -18,6 +18,7 @@ import javax.swing.border.Border;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import java.util.concurrent.*;
 
 import javax.swing.SwingUtilities;
 import javax.swing.*;
@@ -70,7 +71,7 @@ public class Racing {
 		appFrame.getContentPane().add(gamePanel, "Center");
 		appFrame.setVisible(true);
 
-		BackgroundMusic menu_theme = new BackgroundMusic("menu.wav");
+		BackgroundSound menu_theme = new BackgroundSound("menu.wav", true);
 		menu_theme.play();
 	}
 
@@ -183,15 +184,25 @@ public class Racing {
 		}
 
 		public void run() {
+			BackgroundSound fallSound = new BackgroundSound("stinky.wav", false);
+
 			while (!endgame) {
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) { }
 
-				if (isCollidingWithDirt(p1.getX(), p1.getY(), dirt)) {
+				if (isCollidingWithLayer(p1.getX(), p1.getY(), dirt)) {
 					maxvelocity = 0.8;
 				} else {
 					maxvelocity = 2;
+				}
+
+				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !fallRecentlyPlayed) {
+					// wait 3 sec, but do not pause rest of execution
+					fallSound.play();
+					fallRecentlyPlayed = true;
+					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+                	scheduler.schedule(() -> fallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
 				}
 
 				if (upPressed == true) {
@@ -241,7 +252,7 @@ public class Racing {
 		private double velocitystep, rotatestep, maxvelocity, brakingforce;
 	}
 
-	private static boolean isCollidingWithDirt(double carX, double carY, BufferedImage img) {
+	private static boolean isCollidingWithLayer(double carX, double carY, BufferedImage img) {
 		 int pixelColor = img.getRGB((int) carX, (int) carY);
 
 		 return (pixelColor & 0xFF000000) != 0;
@@ -289,13 +300,14 @@ public class Racing {
 	}
 
 	// -------- UI AND APPEARANCE --------
-	public static class BackgroundMusic implements Runnable {
-		private String file = "menu.wav";
 
-		public BackgroundMusic() {}
+	public static class BackgroundSound implements Runnable {
+		private String file;
+		private boolean loopAudio;
 
-		public BackgroundMusic(String file) {
+		public BackgroundSound(String file, Boolean isLoop) {
 			this.file = file;
+			this.loopAudio = isLoop;
 		}
 
 		public void play() {
@@ -315,7 +327,11 @@ public class Racing {
 				Clip clip = AudioSystem.getClip();
 				inputStream = AudioSystem.getAudioInputStream(soundFile);
 				clip.open(inputStream);
-				clip.loop(Clip.LOOP_CONTINUOUSLY);
+				if (loopAudio) { 
+					clip.loop(Clip.LOOP_CONTINUOUSLY); 
+				} else {
+					clip.start();
+				}
 	        } 
 	        catch (Exception e) {
 	            e.printStackTrace();
@@ -536,6 +552,7 @@ public class Racing {
 	// -------- GLOBAL VARIABLES --------
 	private static Boolean endgame;
 	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
+	private static Boolean fallRecentlyPlayed = false;
 
 	private static JButton startButton, quitButton;
 
