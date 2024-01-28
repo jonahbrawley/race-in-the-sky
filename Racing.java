@@ -67,6 +67,11 @@ public class Racing {
 			bindKey((JPanel) gamePanel, "LEFT");
 			bindKey((JPanel) gamePanel, "RIGHT");
 
+			bindKey((JPanel) gamePanel, "W");
+			bindKey((JPanel) gamePanel, "A");
+			bindKey((JPanel) gamePanel, "S");
+			bindKey((JPanel) gamePanel, "D");
+
 		gamePanel.setBackground(CELESTIAL);
 		appFrame.getContentPane().add(gamePanel, "Center");
 		appFrame.setVisible(true);
@@ -81,13 +86,20 @@ public class Racing {
 		WINWIDTH = 1000;
 		WINHEIGHT = 800;
 		endgame = false;
+
 		p1width = 30;
 		p1height = 30;
 		p1originalX = (double) XOFFSET + ((double) WINWIDTH / 2.15) - (p1width / 2.0);
-		p1originalY = (double) YOFFSET + ((double) WINHEIGHT / 1.15) - (p1height / 2.0);
+		p1originalY = (double) YOFFSET + ((double) WINHEIGHT / 1.48) - (p1height / 2.0);
+
+		p2width = 30;
+		p2height = 30;
+		p2originalX = (double) XOFFSET + ((double) WINWIDTH / 2.15) - (p1width / 2.0);
+		p2originalY = (double) YOFFSET + ((double) WINHEIGHT / 1.39) - (p1height / 2.0);
 
 		try { // IO
 			player1 = ImageIO.read( new File("car1.png") );
+			player2 = ImageIO.read( new File("car2.png") );
 			sky = ImageIO.read( new File("cloud_track" + File.separator + "sky.png") );
 			dirt = ImageIO.read( new File("cloud_track" + File.separator + "dirt.png") );
 			track = ImageIO.read( new File("cloud_track" + File.separator + "track.png") );
@@ -114,7 +126,13 @@ public class Racing {
 			leftPressed = false;
 			rightPressed = false;
 
-			p1 = new ImageObject(p1originalX, p1originalY, p1width, p1height, 0.0);
+			wPressed = false;
+			sPressed = false;
+			aPressed = false;
+			dPressed = false;
+
+			p1 = new ImageObject(p1originalX, p1originalY, p1width, p1height, 900);
+			p2 = new ImageObject(p2originalX, p2originalY, p2width, p2height, 900);
 
 			try { Thread.sleep(50); } catch (InterruptedException ie) { }
 
@@ -165,6 +183,11 @@ public class Racing {
 					(int)(p1.getY() + 0.5), null);
 				}
 
+				if (!p2dead) {
+					g2D.drawImage(rotateImageObject(p2).filter(player2, null), (int)(p2.getX() + 0.5),
+					(int)(p2.getY() + 0.5), null);
+				}
+
 				g2D.dispose();
 			}
 		}
@@ -181,7 +204,8 @@ public class Racing {
 		public PlayerMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
-			maxvelocity = 2;
+			p1maxvelocity = 2;
+			p2maxvelocity = 2;
 			brakingforce = 0.02;
 		}
 
@@ -194,9 +218,15 @@ public class Racing {
 				} catch (InterruptedException e) { }
 
 				if (isCollidingWithLayer(p1.getX(), p1.getY(), dirt)) {
-					maxvelocity = 0.8;
+					p1maxvelocity = 0.8;
 				} else {
-					maxvelocity = 2;
+					p1maxvelocity = 2;
+				}
+
+				if (isCollidingWithLayer(p2.getX(), p2.getY(), dirt)) {
+					p2maxvelocity = 0.8;
+				} else {
+					p2maxvelocity = 2;
 				}
 
 				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !fallRecentlyPlayed) { // play fall sound
@@ -216,12 +246,20 @@ public class Racing {
 				}
 
 				if (upPressed == true) {
-					if (p1velocity < maxvelocity) {
+					if (p1velocity < p1maxvelocity) {
 						p1velocity = (p1velocity) + velocitystep;
-					} else if (p1velocity >= maxvelocity) { // ensure max vel not exceeded
-						p1velocity = maxvelocity;
+					} else if (p1velocity >= p1maxvelocity) { // ensure max vel not exceeded
+						p1velocity = p1maxvelocity;
 					}
 				}
+				if (wPressed == true) {
+					if (p2velocity < p2maxvelocity) {
+						p2velocity = (p2velocity) + velocitystep;
+					} else if (p2velocity >= p2maxvelocity) { // ensure max vel not exceeded
+						p2velocity = p2maxvelocity;
+					}
+				}
+
 				if (downPressed == true) {
 					if (p1velocity < -1) { // ensure max rev speed
 						p1velocity = -1;
@@ -229,6 +267,14 @@ public class Racing {
 						p1velocity = p1velocity - brakingforce;
 					}
 				}
+				if (sPressed == true) {
+					if (p2velocity < -1) { // ensure max rev speed
+						p2velocity = -1;
+					} else {
+						p2velocity = p2velocity - brakingforce;
+					}
+				}
+
 				if (leftPressed == true) {
 					if (p1velocity < 0) {
 						p1.rotate(-rotatestep);
@@ -236,11 +282,26 @@ public class Racing {
 						p1.rotate(rotatestep);
 					}
 				}
+				if (aPressed == true) {
+					if (p2velocity < 0) {
+						p2.rotate(-rotatestep);
+					} else {
+						p2.rotate(rotatestep);
+					}
+				}
+
 				if (rightPressed == true) {
 					if (p1velocity < 0) {
 						p1.rotate(rotatestep);
 					} else {
 						p1.rotate(-rotatestep);
+					}
+				}
+				if (dPressed == true) {
+					if (p2velocity < 0) {
+						p2.rotate(rotatestep);
+					} else {
+						p2.rotate(-rotatestep);
 					}
 				}
 
@@ -253,13 +314,26 @@ public class Racing {
 						p1velocity = p1velocity - 0.04; 
 					}
 				}
+				// apply drag force
+				if (!wPressed && !sPressed && !aPressed && !dPressed
+					&& p2velocity != 0) {
+					if ((p2velocity - 0.1) < 0) {
+						p2velocity = 0;
+					} else {
+						p2velocity = p2velocity - 0.04; 
+					}
+				}
 
 				p1.move(-p1velocity * Math.cos(p1.getAngle() - Math.PI / 2.0),
 					p1velocity * Math.sin(p1.getAngle() - Math.PI / 2.0));
-				p1.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT);
+				p1.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p1maxvelocity);
+
+				p2.move(-p2velocity * Math.cos(p2.getAngle() - Math.PI / 2.0),
+					p2velocity * Math.sin(p2.getAngle() - Math.PI / 2.0));
+				p2.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p2maxvelocity);
 			}
 		}
-		private double velocitystep, rotatestep, maxvelocity, brakingforce;
+		private double velocitystep, rotatestep, p1maxvelocity, p2maxvelocity, brakingforce;
 	}
 
 	private static boolean isCollidingWithLayer(double carX, double carY, BufferedImage img) {
@@ -318,6 +392,11 @@ public class Racing {
 			if (action.equals("DOWN")) { downPressed = true; }
 			if (action.equals("LEFT")) { leftPressed = true; }
 			if (action.equals("RIGHT")) { rightPressed = true; }
+
+			if (action.equals("W")) { wPressed = true; }
+			if (action.equals("S")) { sPressed = true; }
+			if (action.equals("A")) { aPressed = true; }
+			if (action.equals("D")) { dPressed = true; }
 		}
 	
 		private String action;
@@ -334,6 +413,11 @@ public class Racing {
 			if (action.equals("DOWN")) { downPressed = false; }
 			if (action.equals("LEFT")) { leftPressed = false; }
 			if (action.equals("RIGHT")) { rightPressed = false; }
+
+			if (action.equals("W")) { wPressed = false; }
+			if (action.equals("S")) { sPressed = false; }
+			if (action.equals("A")) { aPressed = false; }
+			if (action.equals("D")) { dPressed = false; }
 		}
 
 		private String action;
@@ -549,22 +633,22 @@ public class Racing {
 			y = yinput;
 		}
 
-		public void screenBounds(double leftEdge, double rightEdge, double topEdge, double bottomEdge) {
+		public void screenBounds(double leftEdge, double rightEdge, double topEdge, double bottomEdge, double velocity) {
 			if (x < leftEdge) { 
 				moveto(leftEdge, getY());
-				p1velocity = p1velocity*0.9;
+				velocity = velocity*0.9;
 			}
 			if (x + getWidth() > rightEdge) { 
 				moveto(rightEdge - getWidth(), getY()); 
-				p1velocity = p1velocity*0.9;
+				velocity = velocity*0.9;
 			}
 			if (y < topEdge) { 
 				moveto(getX(), topEdge); 
-				p1velocity = p1velocity*0.9;
+				velocity = velocity*0.9;
 			}
 			if (y + getHeight() > bottomEdge) { 
 				moveto(getX(), bottomEdge - getHeight()); 
-				p1velocity = p1velocity*0.9;
+				velocity = velocity*0.9;
 			}
 		}
 
@@ -597,8 +681,10 @@ public class Racing {
 	// -------- GLOBAL VARIABLES --------
 	private static Boolean endgame;
 	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
+	private static Boolean wPressed, sPressed, aPressed, dPressed;
 	private static Boolean fallRecentlyPlayed = false;
 	private static Boolean p1dead = false;
+	private static Boolean p2dead = false;
 
 	private static JButton startButton, quitButton;
 
@@ -610,12 +696,12 @@ public class Racing {
 
 	private static ImageObject p1, p2; // player1 and player2 racecar object
 	private static double p1width, p1height, p1originalX, p1originalY, p1velocity;
+	private static double p2width, p2height, p2originalX, p2originalY, p2velocity;
 
 	private static JFrame appFrame;
 
 	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
-	private static BufferStrategy bs;
 	private static BufferedImage sky, dirt, track;
-	private static BufferedImage player1; // TODO: add player2
+	private static BufferedImage player1, player2; // TODO: add player2
 }
