@@ -263,9 +263,12 @@ public class Racing {
 	}
 
 	private static boolean isCollidingWithLayer(double carX, double carY, BufferedImage img) {
-		 int pixelColor = img.getRGB((int) carX, (int) carY);
+	    int roundedX = (int) Math.round(carX);
+	    int roundedY = (int) Math.round(carY);
 
-		 return (pixelColor & 0xFF000000) != 0;
+	    int pixelColor = img.getRGB(roundedX, roundedY);
+
+	    return (pixelColor & 0xFF000000) != 0;
 	}
 
 	private static void placePlayerOnNearestTrack(ImageObject p1, BufferedImage currentTrackStrip) {
