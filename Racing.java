@@ -206,7 +206,7 @@ public class Racing {
 		public PlayerOneMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
-			p1maxvelocity = 2;
+			p1.maxvelocity = 2;
 			brakingforce = 0.02;
 		}
 
@@ -219,17 +219,17 @@ public class Racing {
 				} catch (InterruptedException e) { }
 
 				if (isCollidingWithLayer(p1.getX(), p1.getY(), dirt)) {
-					p1maxvelocity = 0.8;
+					p1.maxvelocity = 0.8;
 				} else {
-					p1maxvelocity = 2;
+					p1.maxvelocity = 2;
 				}
 
-				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !p2FallRecentlyPlayed) { // play fall sound
+				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !p1FallRecentlyPlayed) { // play fall sound
 					// wait 3 sec, but do not pause rest of execution
 					fallSound.play();
-					p2FallRecentlyPlayed = true;
+					p1FallRecentlyPlayed = true;
 					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-                	scheduler.schedule(() -> p2FallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
+                	scheduler.schedule(() -> p1FallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
 				}
 
 				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky)) {
@@ -240,11 +240,15 @@ public class Racing {
 					p1dead = false;
 				}
 
+				if (isCollidingWithPlayer(p1, p2)) {
+					p2.maxvelocity += p1.maxvelocity;
+				}
+
 				if (upPressed == true) {
-					if (p1velocity < p1maxvelocity) {
+					if (p1velocity < p1.maxvelocity) {
 						p1velocity = (p1velocity) + velocitystep;
-					} else if (p1velocity >= p1maxvelocity) { // ensure max vel not exceeded
-						p1velocity = p1maxvelocity;
+					} else if (p1velocity >= p1.maxvelocity) { // ensure max vel not exceeded
+						p1velocity = p1.maxvelocity;
 					}
 				}
 
@@ -284,10 +288,10 @@ public class Racing {
 
 				p1.move(-p1velocity * Math.cos(p1.getAngle() - Math.PI / 2.0),
 					p1velocity * Math.sin(p1.getAngle() - Math.PI / 2.0));
-				p1.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p1maxvelocity);
+				p1.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p1.maxvelocity);
 			}
 		}
-		private double velocitystep, rotatestep, p1maxvelocity, brakingforce;
+		private double velocitystep, rotatestep, brakingforce;
 	}
 
 	// updating player two movement
@@ -295,7 +299,7 @@ public class Racing {
 		public PlayerTwoMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
-			p2maxvelocity = 2;
+			p2.maxvelocity = 2;
 			brakingforce = 0.02;
 		}
 
@@ -308,9 +312,9 @@ public class Racing {
 				} catch (InterruptedException e) { }
 
 				if (isCollidingWithLayer(p2.getX(), p2.getY(), dirt)) {
-					p2maxvelocity = 0.8;
+					p2.maxvelocity = 0.8;
 				} else {
-					p2maxvelocity = 2;
+					p2.maxvelocity = 2;
 				}
 
 				if (isCollidingWithLayer(p2.getX(), p2.getY(), sky) && !p2FallRecentlyPlayed) { // play fall sound
@@ -329,11 +333,15 @@ public class Racing {
 					p2dead = false;
 				}
 
+				if (isCollidingWithPlayer(p2, p1)) {
+					p1.maxvelocity += p2.maxvelocity;
+				}
+				
 				if (wPressed == true) {
-					if (p2velocity < p2maxvelocity) {
+					if (p2velocity < p2.maxvelocity) {
 						p2velocity = (p2velocity) + velocitystep;
-					} else if (p2velocity >= p2maxvelocity) { // ensure max vel not exceeded
-						p2velocity = p2maxvelocity;
+					} else if (p2velocity >= p2.maxvelocity) { // ensure max vel not exceeded
+						p2velocity = p2.maxvelocity;
 					}
 				}
 
@@ -373,10 +381,10 @@ public class Racing {
 
 				p2.move(-p2velocity * Math.cos(p2.getAngle() - Math.PI / 2.0),
 					p2velocity * Math.sin(p2.getAngle() - Math.PI / 2.0));
-				p2.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p2maxvelocity);
+				p2.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p2.maxvelocity);
 			}
 		}
-		private double velocitystep, rotatestep, p2maxvelocity, brakingforce;
+		private double velocitystep, rotatestep, brakingforce;
 	}
 
 	private static boolean isCollidingWithLayer(double carX, double carY, BufferedImage img) {
@@ -386,6 +394,13 @@ public class Racing {
 	    int pixelColor = img.getRGB(roundedX, roundedY);
 
 	    return (pixelColor & 0xFF000000) != 0;
+	}
+
+	private static boolean isCollidingWithPlayer(ImageObject x1, ImageObject x2) {
+		if ( (x1.getX() == x2.getX()) && (x1.getY() == x2.getY()) ) {
+			return true;
+		}
+		return false;
 	}
 
 	private static void placePlayerOnNearestTrack(ImageObject p1, BufferedImage currentTrackStrip) {
@@ -582,6 +597,7 @@ public class Racing {
 	// moveable image objects
 	private static class ImageObject {
 		private double x, y, xwidth, yheight, angle, internalangle, comX, comY;
+		public double maxvelocity;
 		private Vector<Double> coords, triangles;
 
 		public ImageObject() {}
