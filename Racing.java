@@ -140,8 +140,10 @@ public class Racing {
 			gamePanel.setGameActive(true);
 			gamePanel.startAnimation();
 
-			Thread t1 = new Thread( new PlayerMover() );
+			Thread t1 = new Thread( new PlayerOneMover() );
+			Thread t2 = new Thread( new PlayerTwoMover() );
 			t1.start();
+			t2.start();
 		}
 	}
 
@@ -199,13 +201,12 @@ public class Racing {
 		public void setGameActive(boolean active) { gameActive = active; }
 	}
 
-	// thread responsible for updating player movement
-	private static class PlayerMover implements Runnable {
-		public PlayerMover() {
+	// updating player one movement
+	private static class PlayerOneMover implements Runnable {
+		public PlayerOneMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
 			p1maxvelocity = 2;
-			p2maxvelocity = 2;
 			brakingforce = 0.02;
 		}
 
@@ -223,18 +224,12 @@ public class Racing {
 					p1maxvelocity = 2;
 				}
 
-				if (isCollidingWithLayer(p2.getX(), p2.getY(), dirt)) {
-					p2maxvelocity = 0.8;
-				} else {
-					p2maxvelocity = 2;
-				}
-
-				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !fallRecentlyPlayed) { // play fall sound
+				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !p2FallRecentlyPlayed) { // play fall sound
 					// wait 3 sec, but do not pause rest of execution
 					fallSound.play();
-					fallRecentlyPlayed = true;
+					p2FallRecentlyPlayed = true;
 					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-                	scheduler.schedule(() -> fallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
+                	scheduler.schedule(() -> p2FallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
 				}
 
 				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky)) {
@@ -252,26 +247,12 @@ public class Racing {
 						p1velocity = p1maxvelocity;
 					}
 				}
-				if (wPressed == true) {
-					if (p2velocity < p2maxvelocity) {
-						p2velocity = (p2velocity) + velocitystep;
-					} else if (p2velocity >= p2maxvelocity) { // ensure max vel not exceeded
-						p2velocity = p2maxvelocity;
-					}
-				}
 
 				if (downPressed == true) {
 					if (p1velocity < -1) { // ensure max rev speed
 						p1velocity = -1;
 					} else {
 						p1velocity = p1velocity - brakingforce;
-					}
-				}
-				if (sPressed == true) {
-					if (p2velocity < -1) { // ensure max rev speed
-						p2velocity = -1;
-					} else {
-						p2velocity = p2velocity - brakingforce;
 					}
 				}
 
@@ -282,26 +263,12 @@ public class Racing {
 						p1.rotate(rotatestep);
 					}
 				}
-				if (aPressed == true) {
-					if (p2velocity < 0) {
-						p2.rotate(-rotatestep);
-					} else {
-						p2.rotate(rotatestep);
-					}
-				}
 
 				if (rightPressed == true) {
 					if (p1velocity < 0) {
 						p1.rotate(rotatestep);
 					} else {
 						p1.rotate(-rotatestep);
-					}
-				}
-				if (dPressed == true) {
-					if (p2velocity < 0) {
-						p2.rotate(rotatestep);
-					} else {
-						p2.rotate(-rotatestep);
 					}
 				}
 
@@ -314,6 +281,86 @@ public class Racing {
 						p1velocity = p1velocity - 0.04; 
 					}
 				}
+
+				p1.move(-p1velocity * Math.cos(p1.getAngle() - Math.PI / 2.0),
+					p1velocity * Math.sin(p1.getAngle() - Math.PI / 2.0));
+				p1.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p1maxvelocity);
+			}
+		}
+		private double velocitystep, rotatestep, p1maxvelocity, brakingforce;
+	}
+
+	// updating player two movement
+	private static class PlayerTwoMover implements Runnable {
+		public PlayerTwoMover() {
+			velocitystep = 0.02; // aka accel
+			rotatestep = 0.03;
+			p2maxvelocity = 2;
+			brakingforce = 0.02;
+		}
+
+		public void run() {
+			BackgroundSound fallSound = new BackgroundSound("stinky.wav", false);
+
+			while (!endgame) {
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) { }
+
+				if (isCollidingWithLayer(p2.getX(), p2.getY(), dirt)) {
+					p2maxvelocity = 0.8;
+				} else {
+					p2maxvelocity = 2;
+				}
+
+				if (isCollidingWithLayer(p2.getX(), p2.getY(), sky) && !p2FallRecentlyPlayed) { // play fall sound
+					// wait 3 sec, but do not pause rest of execution
+					fallSound.play();
+					p2FallRecentlyPlayed = true;
+					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+                	scheduler.schedule(() -> p2FallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
+				}
+
+				if (isCollidingWithLayer(p2.getX(), p2.getY(), sky)) {
+					p2dead = true;
+					try { Thread.sleep(3000); } catch (InterruptedException e) { }
+					p2velocity = 0;
+					placePlayerOnNearestTrack(p2, track);
+					p2dead = false;
+				}
+
+				if (wPressed == true) {
+					if (p2velocity < p2maxvelocity) {
+						p2velocity = (p2velocity) + velocitystep;
+					} else if (p2velocity >= p2maxvelocity) { // ensure max vel not exceeded
+						p2velocity = p2maxvelocity;
+					}
+				}
+
+				if (sPressed == true) {
+					if (p2velocity < -1) { // ensure max rev speed
+						p2velocity = -1;
+					} else {
+						p2velocity = p2velocity - brakingforce;
+					}
+				}
+
+				if (aPressed == true) {
+					if (p2velocity < 0) {
+						p2.rotate(-rotatestep);
+					} else {
+						p2.rotate(rotatestep);
+					}
+				}
+
+				if (dPressed == true) {
+					if (p2velocity < 0) {
+						p2.rotate(rotatestep);
+					} else {
+						p2.rotate(-rotatestep);
+					}
+				}
+
 				// apply drag force
 				if (!wPressed && !sPressed && !aPressed && !dPressed
 					&& p2velocity != 0) {
@@ -324,16 +371,12 @@ public class Racing {
 					}
 				}
 
-				p1.move(-p1velocity * Math.cos(p1.getAngle() - Math.PI / 2.0),
-					p1velocity * Math.sin(p1.getAngle() - Math.PI / 2.0));
-				p1.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p1maxvelocity);
-
 				p2.move(-p2velocity * Math.cos(p2.getAngle() - Math.PI / 2.0),
 					p2velocity * Math.sin(p2.getAngle() - Math.PI / 2.0));
 				p2.screenBounds(XOFFSET, WINWIDTH, YOFFSET, WINHEIGHT, p2maxvelocity);
 			}
 		}
-		private double velocitystep, rotatestep, p1maxvelocity, p2maxvelocity, brakingforce;
+		private double velocitystep, rotatestep, p2maxvelocity, brakingforce;
 	}
 
 	private static boolean isCollidingWithLayer(double carX, double carY, BufferedImage img) {
@@ -682,7 +725,8 @@ public class Racing {
 	private static Boolean endgame;
 	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
 	private static Boolean wPressed, sPressed, aPressed, dPressed;
-	private static Boolean fallRecentlyPlayed = false;
+	private static Boolean p1FallRecentlyPlayed = false;
+	private static Boolean p2FallRecentlyPlayed = false;
 	private static Boolean p1dead = false;
 	private static Boolean p2dead = false;
 
