@@ -23,6 +23,8 @@ import java.util.concurrent.*;
 import javax.swing.SwingUtilities;
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 public class Racing {
 	public Racing() {
@@ -211,11 +213,14 @@ public class Racing {
 
 	// updating player one movement
 	private static class PlayerOneMover implements Runnable {
+		private static ArrayList<Point> player_lap_progress;
+
 		public PlayerOneMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
 			p1.maxvelocity = 2;
 			brakingforce = 0.02;
+			player_lap_progress = CHECKPOINT_ORDER;
 		}
 
 		public void run() {
@@ -225,6 +230,9 @@ public class Racing {
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) { }
+
+				// check lap progress
+				checkLapProgress(p1, )
 
 				if (isCollidingWithLayer(p1.getX(), p1.getY(), dirt)) {
 					p1.maxvelocity = 0.8;
@@ -393,6 +401,24 @@ public class Racing {
 			}
 		}
 		private double velocitystep, rotatestep, brakingforce;
+	}
+
+	private static void checkLapProgress(ImageObject p, ArrayList<Point> lapProgress) {
+		Point nextPoint = lapProgress.get(0);
+
+		if (nextPoint == cp1) { // has yet to cross cp1, ... etc
+
+		} elif (nextPoint == cp2) {
+
+		} elif (nextPoint == cp3) {
+
+		} elif (nextPoint == cp4) {
+
+		} elif (nextPoint == finish) {
+			// allow player to cross finish line
+			// increment lap when this happens
+			// reset the lapProgress of player in parent (somehow)
+		}
 	}
 
 	private static boolean isCollidingWithLayer(double carX, double carY, BufferedImage img) {
@@ -755,6 +781,14 @@ public class Racing {
 	private static Boolean p2dead = false;
 
 	private static JButton startButton, quitButton;
+
+	private static Point cp1 = new Point(75, 480);
+	private static Point cp2 = new Point(258, 233);
+	private static Point cp3 = new Point(693, 423);
+	private static Point cp4 = new Point(540, 708);
+	private static Point finish = new Point(444, 556);
+	private static final ArrayList<Point> CHECKPOINT_ORDER = new ArrayList<Point>(Arrays.asList(
+		cp1, cp2, cp3, cp4, finish));
 
 	private static Color CELESTIAL = new Color(49, 151, 199);
 	private static Color HIGHLIGHT = new Color(110, 168, 195);
