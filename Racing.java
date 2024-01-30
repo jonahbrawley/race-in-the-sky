@@ -50,6 +50,14 @@ public class Racing {
 		gbc.ipady = 15;
 		gbc.ipadx = 50;
 
+			// Create and add the image label
+		    ImageIcon titleImage = new ImageIcon("title.png");
+		    JLabel titleLabel = new JLabel(titleImage);
+		    gamePanel.add(titleLabel, gbc);
+
+		    // Add a rigid area to create space between the image and buttons
+		    gamePanel.add(Box.createRigidArea(new Dimension(0, 10)), gbc);
+
 			startButton = new MyButton("START RACE");
 			startButton.addActionListener(new StartGame((GamePanel) gamePanel));
 			setButtonAppearance(startButton);
