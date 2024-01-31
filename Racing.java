@@ -20,7 +20,6 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import java.util.concurrent.*;
 
-import javax.swing.SwingUtilities;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
@@ -213,14 +212,14 @@ public class Racing {
 
 	// updating player one movement
 	private static class PlayerOneMover implements Runnable {
-		private static ArrayList<Point> player_lap_progress;
-
 		public PlayerOneMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
 			p1.maxvelocity = 2;
 			brakingforce = 0.02;
-			player_lap_progress = CHECKPOINT_ORDER;
+
+			refreshPoints(p1_lap_progress);
+			p1_curr_lap = 1;
 		}
 
 		public void run() {
@@ -231,8 +230,8 @@ public class Racing {
 					Thread.sleep(10);
 				} catch (InterruptedException e) { }
 
-				// check lap progress
-				checkLapProgress(p1, )
+				// did they finish lap
+				checkLapProgress(p1.getX(), p1.getY(), p1_lap_progress, p1_curr_lap);
 
 				if (isCollidingWithLayer(p1.getX(), p1.getY(), dirt)) {
 					p1.maxvelocity = 0.8;
@@ -317,6 +316,8 @@ public class Racing {
 			rotatestep = 0.03;
 			p2.maxvelocity = 2;
 			brakingforce = 0.02;
+			refreshPoints(p2_lap_progress);
+			p2_curr_lap = 1;
 		}
 
 		public void run() {
@@ -326,6 +327,8 @@ public class Racing {
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) { }
+
+				checkLapProgress(p2.getX(), p2.getY(), p2_lap_progress, p2_curr_lap);
 
 				if (isCollidingWithLayer(p2.getX(), p2.getY(), dirt)) {
 					p2.maxvelocity = 0.8;
@@ -403,21 +406,49 @@ public class Racing {
 		private double velocitystep, rotatestep, brakingforce;
 	}
 
-	private static void checkLapProgress(ImageObject p, ArrayList<Point> lapProgress) {
+	private static void refreshPoints(ArrayList<Point> lapProgress) {
+		lapProgress.clear();
+		for (Point point : CHECKPOINT_ORDER) {
+			lapProgress.add((Point) point.clone());
+			System.out.println(point + " added to lapProgress");
+		}
+		System.out.println("Final order: " + lapProgress);
+	}
+
+	private static void checkLapProgress(Double x, Double y, ArrayList<Point> lapProgress, Integer currLap) {
 		Point nextPoint = lapProgress.get(0);
 
-		if (nextPoint == cp1) { // has yet to cross cp1, ... etc
-
-		} elif (nextPoint == cp2) {
-
-		} elif (nextPoint == cp3) {
-
-		} elif (nextPoint == cp4) {
-
-		} elif (nextPoint == finish) {
+		if (nextPoint.x == cp1.x) { // has yet to cross cp1, ... etc
+			if (y <= nextPoint.y) { // unique checks to determine if player has passed
+				lapProgress.remove(0); // update lapProgress
+				//System.out.println("Someone passed cp1");
+			}
+		} else if (nextPoint.x == cp2.x) {
+			if (x >= nextPoint.x) {
+				lapProgress.remove(0);
+				//System.out.println("Someone passed cp2");
+			}
+		} else if (nextPoint.x == cp3.x) {
+			if (y >= nextPoint.y) {
+				lapProgress.remove(0);
+				//System.out.println("Someone passed cp3");
+			}
+		} else if (nextPoint.x == cp4.x) {
+			if (x <= nextPoint.x) {
+				lapProgress.remove(0);
+				//System.out.println("Someone passed cp4");
+			}
+		} else if (nextPoint.x == finish.x) {
 			// allow player to cross finish line
-			// increment lap when this happens
-			// reset the lapProgress of player in parent (somehow)
+			if (x <= nextPoint.x) {
+				System.out.println("Done with lap " + currLap + "! Now on lap " + (currLap+1));
+				if (lapProgress == p1_lap_progress) {
+					p1_curr_lap += 1;
+				} else if (lapProgress == p2_lap_progress) {
+					p2_curr_lap += 1;
+				}
+				refreshPoints(lapProgress);
+			}
 		}
 	}
 
@@ -789,6 +820,9 @@ public class Racing {
 	private static Point finish = new Point(444, 556);
 	private static final ArrayList<Point> CHECKPOINT_ORDER = new ArrayList<Point>(Arrays.asList(
 		cp1, cp2, cp3, cp4, finish));
+	private static ArrayList<Point> p1_lap_progress = new ArrayList<Point>();
+	private static ArrayList<Point> p2_lap_progress = new ArrayList<Point>();
+	private static Integer p1_curr_lap, p2_curr_lap;
 
 	private static Color CELESTIAL = new Color(49, 151, 199);
 	private static Color HIGHLIGHT = new Color(110, 168, 195);
