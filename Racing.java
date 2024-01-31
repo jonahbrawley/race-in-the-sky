@@ -140,7 +140,8 @@ public class Racing {
 			try { Thread.sleep(50); } catch (InterruptedException ie) { }
 
 			endgame = false;
-			gamePanel.setGameActive(true);
+			//gamePanel.setGameActive(true);
+			gameActive = true;
 			gamePanel.startAnimation();
 
 			Thread t1 = new Thread( new PlayerOneMover() );
@@ -161,18 +162,15 @@ public class Racing {
 	// Proper way to display graphics is by overriding JPanel's paintComponent method
 	public static class GamePanel extends JPanel {
 		private Timer timer;
-		private boolean gameActive;
 
 		public GamePanel() {
 			timer = new Timer(32, new ActionListener() {
 				public void actionPerformed(ActionEvent evt) {
-					if (gameActive) {
+					if (gameActive || GameOver) {
 						repaint();
 					}
 				}
 			});
-
-			gameActive = false;
 		}
 
 		@Override
@@ -211,13 +209,27 @@ public class Racing {
 
 				g2D.dispose();
 			}
+
+			if (GameOver) {
+				Graphics2D g2D = (Graphics2D) g;
+				if (p1won) {
+					g2D.setFont(new Font("SansSerif", Font.PLAIN, 36));
+					g2D.setColor(P2RED);
+					g2D.drawString("P1 won!!!!!!!!!!!! :DDDDDDDD", 50, 50);
+				}
+				if (p2won) {
+					g2D.setColor(P2RED);
+					g2D.drawString("P1 won!!!!!!!!!!!! :DDDDDDDD", 50, 50);
+				}
+				g2D.dispose();
+			}
 		}
 
 		public void startAnimation() { timer.start(); }
 
 		public void stopAnimation() { timer.stop(); }
 
-		public void setGameActive(boolean active) { gameActive = active; }
+		//public void setGameActive(boolean active) { gameActive = active; }
 	}
 
 	// updating player one movement
@@ -231,7 +243,7 @@ public class Racing {
 			brakingforce = 0.02;
 
 			refreshPoints(p1_lap_progress);
-			p1_curr_lap = 1;
+			p1_curr_lap = 3;
 
 			timeTracker.startLap(true); // is p1
 		}
@@ -467,6 +479,16 @@ public class Racing {
 				refreshPoints(lapProgress);
 			}
 		}
+		if (p1_curr_lap == 4) {
+			p1won = true;
+			gameActive = false;
+			GameOver = true;
+		}
+		if (p2_curr_lap == 4) {
+			p2won = true;
+			gameActive = false;
+			GameOver = true;
+		}
 	}
 
 	private static boolean isCollidingWithLayer(double carX, double carY, BufferedImage img) {
@@ -486,7 +508,6 @@ public class Racing {
 		ydiff /= magnitude;
 
 		if ( magnitude <= 15 ) {
-			System.out.println("COLLISION!!!");
 			if (p1velocity < p2velocity) {
 				p1velocity = 0; // GET RUN OVER
 				p1.rotate(50);
@@ -856,6 +877,8 @@ public class Racing {
 
 	// -------- GLOBAL VARIABLES --------
 	private static Boolean endgame;
+	private static Boolean GameOver = false;
+	private static boolean gameActive = false;
 	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
 	private static Boolean wPressed, sPressed, aPressed, dPressed;
 	private static Boolean p1FallRecentlyPlayed = false;
@@ -884,6 +907,9 @@ public class Racing {
 
 	private static String p1BestTime = "???";
 	private static String p2BestTime = "???";
+
+	private static boolean p1won = false;
+	private static boolean p2won = false;
 
 	private static Color CELESTIAL = new Color(49, 151, 199);
 	private static Color HIGHLIGHT = new Color(110, 168, 195);
