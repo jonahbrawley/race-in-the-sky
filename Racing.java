@@ -456,9 +456,11 @@ public class Racing {
 			if (x <= nextPoint.x) {
 				if (lapProgress == p1_lap_progress) {
 					tracker.endLap(true);
+					tracker.startLap(true);
 					p1_curr_lap += 1;
 				} else if (lapProgress == p2_lap_progress) {
 					tracker.endLap(false);
+					tracker.startLap(false);
 					p2_curr_lap += 1;
 				}
 				System.out.println("Done with lap " + currLap + "! Now on lap " + (currLap+1));
