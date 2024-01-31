@@ -1,29 +1,23 @@
 import java.util.Vector;
-import java.util.Random;
-
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferStrategy;
-import java.awt.image.ImageObserver;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.File;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import javax.swing.border.Border;
-
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import java.util.concurrent.*;
 
+import java.util.concurrent.*;
+import java.awt.event.*;
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.ArrayList;
 
 public class Racing {
 	public Racing() {
@@ -151,6 +145,7 @@ public class Racing {
 
 			Thread t1 = new Thread( new PlayerOneMover() );
 			Thread t2 = new Thread( new PlayerTwoMover() );
+
 			t1.start();
 			t2.start();
 		}
@@ -163,6 +158,7 @@ public class Racing {
 	}
 
 	// -------- ANIMATION AND MOVEMENT --------
+	// Proper way to display graphics is by overriding JPanel's paintComponent method
 	public static class GamePanel extends JPanel {
 		private Timer timer;
 		private boolean gameActive;
@@ -185,10 +181,24 @@ public class Racing {
 			if (gameActive) {
 				Graphics2D g2D = (Graphics2D) g;
 
-				g2D.drawImage(sky, XOFFSET, YOFFSET, null);
+				g2D.drawImage(sky, XOFFSET, YOFFSET, null); // draw track in layers
 				g2D.drawImage(dirt, XOFFSET, YOFFSET, null);
 				g2D.drawImage(track, XOFFSET, YOFFSET, null);
 
+				// draw information (curr_lap, speed, etc) at top
+				g2D.setFont(new Font("SansSerif", Font.PLAIN, 18));
+				
+				g2D.setColor(P1BLUE); // p1 info
+				g2D.drawString("Lap: " + p1_curr_lap, 15, 15); // current lap
+				g2D.drawString("Best time: " + p1BestTime, 15, 35); // best lap time
+				g2D.drawString("Speed: " + Math.round(p1velocity*50) + "v/s", 15, 55); // speed
+
+				g2D.setColor(P2RED); // p2 info
+				g2D.drawString("Lap: " + p2_curr_lap, WINWIDTH-130, 15);
+				g2D.drawString("Best time: " + p2BestTime, WINWIDTH-130, 35);
+				g2D.drawString("Speed: " + Math.round(p2velocity*50)  + "v/s", WINWIDTH-130, 55); // speed
+
+				// dont draw player objects if they are "dead" (for 3 seconds)
 				if (!p1dead) {
 					g2D.drawImage(rotateImageObject(p1).filter(player1, null), (int)(p1.getX() + 0.5),
 					(int)(p1.getY() + 0.5), null);
@@ -212,6 +222,8 @@ public class Racing {
 
 	// updating player one movement
 	private static class PlayerOneMover implements Runnable {
+		LapTimeTracker timeTracker = new LapTimeTracker();
+
 		public PlayerOneMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
@@ -220,6 +232,8 @@ public class Racing {
 
 			refreshPoints(p1_lap_progress);
 			p1_curr_lap = 1;
+
+			timeTracker.startLap(true); // is p1
 		}
 
 		public void run() {
@@ -231,7 +245,7 @@ public class Racing {
 				} catch (InterruptedException e) { }
 
 				// did they finish lap
-				checkLapProgress(p1.getX(), p1.getY(), p1_lap_progress, p1_curr_lap);
+				checkLapProgress(p1.getX(), p1.getY(), p1_lap_progress, p1_curr_lap, timeTracker);
 
 				if (isCollidingWithLayer(p1.getX(), p1.getY(), dirt)) {
 					p1.maxvelocity = 0.8;
@@ -255,9 +269,7 @@ public class Racing {
 					p1dead = false;
 				}
 
-				if (isCollidingWithPlayer(p1, p2)) {
-					p2.maxvelocity += p1.maxvelocity;
-				}
+				isCollidingWithPlayer(); // is it?
 
 				if (upPressed == true) {
 					if (p1velocity < p1.maxvelocity) {
@@ -311,13 +323,18 @@ public class Racing {
 
 	// updating player two movement
 	private static class PlayerTwoMover implements Runnable {
+		LapTimeTracker timeTracker = new LapTimeTracker();
+
 		public PlayerTwoMover() {
 			velocitystep = 0.02; // aka accel
 			rotatestep = 0.03;
 			p2.maxvelocity = 2;
 			brakingforce = 0.02;
+
 			refreshPoints(p2_lap_progress);
 			p2_curr_lap = 1;
+
+			timeTracker.startLap(false); // is not p1
 		}
 
 		public void run() {
@@ -328,7 +345,7 @@ public class Racing {
 					Thread.sleep(10);
 				} catch (InterruptedException e) { }
 
-				checkLapProgress(p2.getX(), p2.getY(), p2_lap_progress, p2_curr_lap);
+				checkLapProgress(p2.getX(), p2.getY(), p2_lap_progress, p2_curr_lap, timeTracker);
 
 				if (isCollidingWithLayer(p2.getX(), p2.getY(), dirt)) {
 					p2.maxvelocity = 0.8;
@@ -352,9 +369,7 @@ public class Racing {
 					p2dead = false;
 				}
 
-				if (isCollidingWithPlayer(p2, p1)) {
-					p1.maxvelocity += p2.maxvelocity;
-				}
+				isCollidingWithPlayer();
 				
 				if (wPressed == true) {
 					if (p2velocity < p2.maxvelocity) {
@@ -410,12 +425,10 @@ public class Racing {
 		lapProgress.clear();
 		for (Point point : CHECKPOINT_ORDER) {
 			lapProgress.add((Point) point.clone());
-			System.out.println(point + " added to lapProgress");
 		}
-		System.out.println("Final order: " + lapProgress);
 	}
 
-	private static void checkLapProgress(Double x, Double y, ArrayList<Point> lapProgress, Integer currLap) {
+	private static void checkLapProgress(Double x, Double y, ArrayList<Point> lapProgress, Integer currLap, LapTimeTracker tracker) {
 		Point nextPoint = lapProgress.get(0);
 
 		if ((nextPoint.x == cp1.x)) { // has yet to cross cp1, ... etc
@@ -441,12 +454,14 @@ public class Racing {
 		} else if (nextPoint.x == finish.x) {
 			// allow player to cross finish line
 			if (x <= nextPoint.x) {
-				System.out.println("Done with lap " + currLap + "! Now on lap " + (currLap+1));
 				if (lapProgress == p1_lap_progress) {
+					tracker.endLap(true);
 					p1_curr_lap += 1;
 				} else if (lapProgress == p2_lap_progress) {
+					tracker.endLap(false);
 					p2_curr_lap += 1;
 				}
+				System.out.println("Done with lap " + currLap + "! Now on lap " + (currLap+1));
 				refreshPoints(lapProgress);
 			}
 		}
@@ -461,11 +476,23 @@ public class Racing {
 	    return (pixelColor & 0xFF000000) != 0;
 	}
 
-	private static boolean isCollidingWithPlayer(ImageObject x1, ImageObject x2) {
-		if ( (x1.getX() == x2.getX()) && (x1.getY() == x2.getY()) ) {
-			return true;
+	private static void isCollidingWithPlayer() {
+		double xdiff = p2.getX() - p1.getX();
+		double ydiff = p2.getY() - p1.getY();
+		double magnitude = Math.sqrt(xdiff * xdiff + ydiff * ydiff);
+		xdiff /= magnitude;
+		ydiff /= magnitude;
+
+		if ( magnitude <= 15 ) {
+			System.out.println("COLLISION!!!");
+			if (p1velocity < p2velocity) {
+				p1velocity = 0; // GET RUN OVER
+				p1.rotate(50);
+			} else {
+				p2velocity = 0;
+				p2.rotate(50);
+			}
 		}
-		return false;
 	}
 
 	private static void placePlayerOnNearestTrack(ImageObject p1, BufferedImage currentTrackStrip) {
@@ -546,8 +573,31 @@ public class Racing {
 		private String action;
 	}
 
-	// -------- UI AND APPEARANCE --------
+	private static class LapTimeTracker {
+		public void startLap(boolean p1) {
+			if (p1) {
+				p1LapStartTime = System.currentTimeMillis();
+			} else {
+				p2LapStartTime = System.currentTimeMillis();
+			}
+		}
 
+		public void endLap(boolean p1) {
+			if (p1) {
+				long millis = p1LapStartTime - System.currentTimeMillis();
+				p1LapTimes.add( Math.abs(millis / 1000.0) );
+				System.out.println(p1LapTimes);
+				p1BestTime = Collections.min(p1LapTimes).toString();
+			} else {
+				long millis = p2LapStartTime - System.currentTimeMillis();
+				p2LapTimes.add( Math.abs(millis / 1000.0) );
+				System.out.println(p2LapTimes);
+				p2BestTime = Collections.min(p2LapTimes).toString();
+			}
+		}
+	}
+
+	// -------- UI AND APPEARANCE --------
 	public static class BackgroundSound implements Runnable {
 		private String file;
 		private boolean loopAudio;
@@ -824,13 +874,24 @@ public class Racing {
 	private static ArrayList<Point> p2_lap_progress = new ArrayList<Point>();
 	private static Integer p1_curr_lap, p2_curr_lap;
 
+	private static long p1LapStartTime = 0;
+	private static ArrayList<Double> p1LapTimes = new ArrayList<>();
+
+	private static long p2LapStartTime = 0;
+	private static ArrayList<Double> p2LapTimes = new ArrayList<>();
+
+	private static String p1BestTime = "???";
+	private static String p2BestTime = "???";
+
 	private static Color CELESTIAL = new Color(49, 151, 199);
 	private static Color HIGHLIGHT = new Color(110, 168, 195);
 	private static Color URANIAN = new Color(164, 210, 232);
+	private static Color P1BLUE = new Color(50, 115, 213);
+	private static Color P2RED = new Color(213, 50, 50);
 
 	private static int XOFFSET, YOFFSET, WINWIDTH, WINHEIGHT;
 
-	private static ImageObject p1, p2; // player1 and player2 racecar object
+	private static ImageObject p1, p2;
 	private static double p1width, p1height, p1originalX, p1originalY, p1velocity;
 	private static double p2width, p2height, p2originalX, p2originalY, p2velocity;
 
@@ -839,5 +900,5 @@ public class Racing {
 	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
 	private static BufferedImage sky, dirt, track;
-	private static BufferedImage player1, player2; // TODO: add player2
+	private static BufferedImage player1, player2;
 }
