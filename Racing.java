@@ -418,25 +418,25 @@ public class Racing {
 	private static void checkLapProgress(Double x, Double y, ArrayList<Point> lapProgress, Integer currLap) {
 		Point nextPoint = lapProgress.get(0);
 
-		if (nextPoint.x == cp1.x) { // has yet to cross cp1, ... etc
-			if (y <= nextPoint.y) { // unique checks to determine if player has passed
+		if ((nextPoint.x == cp1.x)) { // has yet to cross cp1, ... etc
+			if ( (y <= nextPoint.y) && (x < finish.x) ) { // make sure player is on left of finish
 				lapProgress.remove(0); // update lapProgress
-				//System.out.println("Someone passed cp1");
+				System.out.println("Someone passed cp1");
 			}
 		} else if (nextPoint.x == cp2.x) {
 			if (x >= nextPoint.x) {
 				lapProgress.remove(0);
-				//System.out.println("Someone passed cp2");
+				System.out.println("Someone passed cp2");
 			}
 		} else if (nextPoint.x == cp3.x) {
 			if (y >= nextPoint.y) {
 				lapProgress.remove(0);
-				//System.out.println("Someone passed cp3");
+				System.out.println("Someone passed cp3");
 			}
 		} else if (nextPoint.x == cp4.x) {
 			if (x <= nextPoint.x) {
 				lapProgress.remove(0);
-				//System.out.println("Someone passed cp4");
+				System.out.println("Someone passed cp4");
 			}
 		} else if (nextPoint.x == finish.x) {
 			// allow player to cross finish line
