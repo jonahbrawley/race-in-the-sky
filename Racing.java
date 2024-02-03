@@ -926,7 +926,7 @@ public class Racing {
 	private static Boolean p2FallRecentlyPlayed = false;
 	private static Boolean p1dead = false;
 	private static Boolean p2dead = false;
-	private static Boolean SOUNDS_ENABLED = false;
+	private static Boolean SOUNDS_ENABLED = true; // ENABLE OR DISABLE FOR SOUND
 
 	private static JButton startButton, quitButton;
 	private static JLabel titleLabel;
