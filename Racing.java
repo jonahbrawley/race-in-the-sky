@@ -941,7 +941,7 @@ public class Racing {
 
 	private static JButton startButton, quitButton;
 
-	private static Point cp1 = new Point(75, 480);
+	private static Point cp1 = new Point(75, 420);
 	private static Point cp2 = new Point(258, 233);
 	private static Point cp3 = new Point(693, 423);
 	private static Point cp4 = new Point(540, 708);
