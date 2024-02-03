@@ -83,7 +83,10 @@ public class Racing {
 		appFrame.setVisible(true);
 
 		BackgroundSound menu_theme = new BackgroundSound("menu.wav", true);
-		// menu_theme.play();
+		
+		if (SOUNDS_ENABLED) {
+			menu_theme.play();
+		}
 	}
 
 	public static void setup() {
@@ -269,13 +272,13 @@ public class Racing {
 				isCollidingWithSky = (isCollidingWithLayer(p1.getX(), p1.getY(), 0.65, nonAlphaSkyMap));
 				isCollidingWithDirt = (isCollidingWithLayer(p1.getX(), p1.getY(), 0.50, nonAlphaDirtMap));
 
-				/*if (isCollidingWithSky && !p1FallRecentlyPlayed) { // play fall sound
+				if (isCollidingWithSky && !p1FallRecentlyPlayed && SOUNDS_ENABLED) { // play fall sound
 					// wait 3 sec, but do not pause rest of execution
 					fallSound.play();
 					p1FallRecentlyPlayed = true;
 					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
                 	scheduler.schedule(() -> p1FallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
-				}*/
+				}
 
 				if (isCollidingWithSky) {
 					p1dead = true;
@@ -373,13 +376,13 @@ public class Racing {
 				isCollidingWithSky = (isCollidingWithLayer(p2.getX(), p2.getY(), 0.65, nonAlphaSkyMap));
 				isCollidingWithDirt = (isCollidingWithLayer(p2.getX(), p2.getY(), 0.50, nonAlphaDirtMap));
 
-				/*if (isCollidingWithSky && !p2FallRecentlyPlayed) { // play fall sound
+				if (isCollidingWithSky && !p2FallRecentlyPlayed && SOUNDS_ENABLED) { // play fall sound
 					// wait 3 sec, but do not pause rest of execution
 					fallSound.play();
 					p2FallRecentlyPlayed = true;
 					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
                 	scheduler.schedule(() -> p2FallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
-				}*/
+				}
 
 				if (isCollidingWithSky) {
 					p2dead = true;
@@ -590,8 +593,6 @@ public class Racing {
 
 	// monitors keypresses
 	private static class KeyPressed extends AbstractAction {
-		public KeyPressed() { action = ""; }
-
 		public KeyPressed(String input) { action = input; }
 
 		public void actionPerformed(ActionEvent e) {
@@ -611,8 +612,6 @@ public class Racing {
 
 	// monitors keyreleases
 	private static class KeyReleased extends AbstractAction {
-		public KeyReleased() { action = ""; }
-
 		public KeyReleased(String input) { action = input; }
 
 		public void actionPerformed(ActionEvent e) {
@@ -768,11 +767,8 @@ public class Racing {
     // -------- UTILITY FUNCTIONS --------
 	// moveable image objects
 	private static class ImageObject {
-		private double x, y, xwidth, yheight, angle, internalangle, comX, comY;
+		private double x, y, xwidth, yheight, angle;
 		public double maxvelocity;
-		private Vector<Double> coords, triangles;
-
-		public ImageObject() {}
 
 		public ImageObject(double xinput, double yinput, double xwidthinput,
 			double yheightinput, double angleinput) {
@@ -781,8 +777,6 @@ public class Racing {
 			xwidth = xwidthinput;
 			yheight = yheightinput;
 			angle = angleinput;
-			internalangle = 0.0;
-			coords = new Vector<Double>();
 		}
 
 		public double getX() { return x; }
@@ -794,65 +788,6 @@ public class Racing {
 		public double getHeight() { return yheight; }
 
 		public double getAngle() { return angle; }
-
-		public double getInternalAngle() { return internalangle; }
-
-		public void setAngle(double angleinput) { angle = angleinput; }
-
-		public void setInternalAngle(double input) { internalangle = input; }
-
-		public Vector<Double> getCoords() { return coords; }
-
-		public void setCoords(Vector<Double> input) {
-			coords = input;
-			generateTriangles();
-		}
-
-		public void generateTriangles() {
-			triangles = new Vector<Double>();
-			// format: (0, 1), (2, 3), (4, 5) is x,y coords of triangle
-
-			// get center point of all coords
-			comX = getComX();
-			comY = getComY();
-
-			for (int i=0; i<coords.size(); i=i+2) {
-				triangles.addElement(coords.elementAt(i));
-				triangles.addElement(coords.elementAt(i+1));
-
-				triangles.addElement(coords.elementAt( (i+2) % coords.size() ));
-				triangles.addElement(coords.elementAt( (i+3) % coords.size() ));
-
-				triangles.addElement(comX);
-				triangles.addElement(comY);
-			}
-		}
-
-		public void printTriangles() {
-			for (int i=0; i < triangles.size(); i=i+6) {
-				System.out.print("p0x: " + triangles.elementAt(i) + ", p0y " + triangles.elementAt(i+1));
-				System.out.print(" p1x: " + triangles.elementAt(i+2) + ", p1y: " + triangles.elementAt(i+3));
-				System.out.println(" p2x: " + triangles.elementAt(i+4) + ", p2y: " + triangles.elementAt(i+5));
-			}
-		}
-
-		public double getComX() {
-			double ret = 0;
-			if (coords.size() > 0) {
-				for (int i=0; i<coords.size(); i=i+2) { ret = ret + coords.elementAt(i); }
-				ret = ret / (coords.size() / 2.0);
-			}
-			return ret;
-		}
-
-		public double getComY() {
-			double ret = 0;
-			if (coords.size() > 0) {
-				for (int i=1; i<coords.size(); i=i+2) { ret = ret + coords.elementAt(i); }
-				ret = ret / (coords.size() / 2.0);
-			}
-			return ret;
-		}
 
 		public void move(double xinput, double yinput) {
 			x = x + xinput; 
@@ -887,12 +822,6 @@ public class Racing {
 			angle = angle + input;
 			while (angle > (Math.PI*2)) { angle = angle - (Math.PI*2); }
 			while (angle < 0) { angle = angle + (Math.PI*2); }
-		}
-
-		public void spin(double input) {
-			internalangle = internalangle + input;
-			while (internalangle > (Math.PI*2)) { internalangle = internalangle - (Math.PI*2); }
-			while (internalangle < 0) { internalangle = internalangle + (Math.PI*2); }
 		}
 	}
 
@@ -938,6 +867,7 @@ public class Racing {
 	private static Boolean p2FallRecentlyPlayed = false;
 	private static Boolean p1dead = false;
 	private static Boolean p2dead = false;
+	private static Boolean SOUNDS_ENABLED = false;
 
 	private static JButton startButton, quitButton;
 
