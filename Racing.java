@@ -14,6 +14,9 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import java.util.concurrent.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -80,7 +83,7 @@ public class Racing {
 		appFrame.setVisible(true);
 
 		BackgroundSound menu_theme = new BackgroundSound("menu.wav", true);
-		menu_theme.play();
+		// menu_theme.play();
 	}
 
 	public static void setup() {
@@ -109,6 +112,9 @@ public class Racing {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		nonAlphaSkyMap = initNonAlphaPixelMap(sky);
+		nonAlphaDirtMap = initNonAlphaPixelMap(dirt);
 	}
 
 	// -------- BUTTON ACTIONS --------
@@ -214,12 +220,13 @@ public class Racing {
 				Graphics2D g2D = (Graphics2D) g;
 				if (p1won) {
 					g2D.setFont(new Font("SansSerif", Font.PLAIN, 36));
-					g2D.setColor(P2RED);
-					g2D.drawString("P1 won!!!!!!!!!!!! :DDDDDDDD", 50, 50);
+					g2D.setColor(P1BLUE);
+					g2D.drawString("Playa ONE won !!!!!!!!!!!! :DDDDDDDD", 50, 50);
 				}
 				if (p2won) {
 					g2D.setColor(P2RED);
-					g2D.drawString("P1 won!!!!!!!!!!!! :DDDDDDDD", 50, 50);
+					g2D.setFont(new Font("SansSerif", Font.PLAIN, 36));
+					g2D.drawString("Playa TWO won !!!!!!!!!!!! :DDDDDDDD", 50, 50);
 				}
 				g2D.dispose();
 			}
@@ -259,21 +266,18 @@ public class Racing {
 				// did they finish lap
 				checkLapProgress(p1.getX(), p1.getY(), p1_lap_progress, p1_curr_lap, timeTracker);
 
-				if (isCollidingWithLayer(p1.getX(), p1.getY(), dirt)) {
-					p1.maxvelocity = 0.8;
-				} else {
-					p1.maxvelocity = 2;
-				}
+				isCollidingWithSky = (isCollidingWithLayer(p1.getX(), p1.getY(), 0.65, nonAlphaSkyMap));
+				isCollidingWithDirt = (isCollidingWithLayer(p1.getX(), p1.getY(), 0.50, nonAlphaDirtMap));
 
-				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky) && !p1FallRecentlyPlayed) { // play fall sound
+				/*if (isCollidingWithSky && !p1FallRecentlyPlayed) { // play fall sound
 					// wait 3 sec, but do not pause rest of execution
 					fallSound.play();
 					p1FallRecentlyPlayed = true;
 					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
                 	scheduler.schedule(() -> p1FallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
-				}
+				}*/
 
-				if (isCollidingWithLayer(p1.getX(), p1.getY(), sky)) {
+				if (isCollidingWithSky) {
 					p1dead = true;
 					try { Thread.sleep(3000); } catch (InterruptedException e) { }
 					p1velocity = 0;
@@ -282,6 +286,12 @@ public class Racing {
 				}
 
 				isCollidingWithPlayer(); // is it?
+
+				if (isCollidingWithDirt) {
+					p1.maxvelocity = 0.8;
+				} else {
+					p1.maxvelocity = 2;
+				}
 
 				if (upPressed == true) {
 					if (p1velocity < p1.maxvelocity) {
@@ -331,6 +341,7 @@ public class Racing {
 			}
 		}
 		private double velocitystep, rotatestep, brakingforce;
+		private boolean isCollidingWithSky, isCollidingWithDirt;
 	}
 
 	// updating player two movement
@@ -344,7 +355,7 @@ public class Racing {
 			brakingforce = 0.02;
 
 			refreshPoints(p2_lap_progress);
-			p2_curr_lap = 1;
+			p2_curr_lap = 3;
 
 			timeTracker.startLap(false); // is not p1
 		}
@@ -359,21 +370,18 @@ public class Racing {
 
 				checkLapProgress(p2.getX(), p2.getY(), p2_lap_progress, p2_curr_lap, timeTracker);
 
-				if (isCollidingWithLayer(p2.getX(), p2.getY(), dirt)) {
-					p2.maxvelocity = 0.8;
-				} else {
-					p2.maxvelocity = 2;
-				}
+				isCollidingWithSky = (isCollidingWithLayer(p2.getX(), p2.getY(), 0.65, nonAlphaSkyMap));
+				isCollidingWithDirt = (isCollidingWithLayer(p2.getX(), p2.getY(), 0.50, nonAlphaDirtMap));
 
-				if (isCollidingWithLayer(p2.getX(), p2.getY(), sky) && !p2FallRecentlyPlayed) { // play fall sound
+				/*if (isCollidingWithSky && !p2FallRecentlyPlayed) { // play fall sound
 					// wait 3 sec, but do not pause rest of execution
 					fallSound.play();
 					p2FallRecentlyPlayed = true;
 					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
                 	scheduler.schedule(() -> p2FallRecentlyPlayed = false, 3, TimeUnit.SECONDS);
-				}
+				}*/
 
-				if (isCollidingWithLayer(p2.getX(), p2.getY(), sky)) {
+				if (isCollidingWithSky) {
 					p2dead = true;
 					try { Thread.sleep(3000); } catch (InterruptedException e) { }
 					p2velocity = 0;
@@ -382,6 +390,12 @@ public class Racing {
 				}
 
 				isCollidingWithPlayer();
+
+				if (isCollidingWithDirt) {
+					p2.maxvelocity = 0.8;
+				} else {
+					p2.maxvelocity = 2;
+				}
 				
 				if (wPressed == true) {
 					if (p2velocity < p2.maxvelocity) {
@@ -431,6 +445,7 @@ public class Racing {
 			}
 		}
 		private double velocitystep, rotatestep, brakingforce;
+		private boolean isCollidingWithSky, isCollidingWithDirt;
 	}
 
 	private static void refreshPoints(ArrayList<Point> lapProgress) {
@@ -491,14 +506,33 @@ public class Racing {
 		}
 	}
 
-	private static boolean isCollidingWithLayer(double carX, double carY, BufferedImage img) {
-	    int roundedX = (int) Math.round(carX);
-	    int roundedY = (int) Math.round(carY);
+	private static boolean isCollidingWithLayer(double carX, double carY, double threshold, Map<Integer, Boolean> map) {
+		int carWidth = 30;
+        int carHeight = 30;
 
-	    int pixelColor = img.getRGB(roundedX, roundedY);
+        // bounding box for the car
+        Rectangle carBounds = new Rectangle((int) carX, (int) carY, carWidth, carHeight);
 
-	    return (pixelColor & 0xFF000000) != 0;
-	}
+        int totalPixels = carBounds.width * carBounds.height;
+        int collidedPixels = 0;
+		int x;
+		int y;
+
+        // iterate over the pixels within the car's bounding box
+        for (x = carBounds.x; x < carBounds.x + carBounds.width; x++) {
+            for (y = carBounds.y; y < carBounds.y + carBounds.height; y++) {
+                // check if the pixel is in the map
+                int key = x + y * WINWIDTH;
+                if (map.containsKey(key)) {
+                    collidedPixels++;
+                }
+            }
+        }
+
+        // check if the percentage of collided pixels is greater than the threshold
+        double collisionPercentage = (double) collidedPixels / totalPixels;
+        return collisionPercentage >= threshold;
+    }
 
 	private static void isCollidingWithPlayer() {
 		double xdiff = p2.getX() - p1.getX();
@@ -875,6 +909,25 @@ public class Racing {
 	    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 	}
 
+	// init the non-alpha pixel map during setup
+    private static Map<Integer, Boolean> initNonAlphaPixelMap(BufferedImage img) {
+        Map<Integer, Boolean> map = new HashMap<>();
+
+        for (int x = 0; x < WINWIDTH; x++) {
+            for (int y = 0; y < WINHEIGHT; y++) {
+                int pixelColor = img.getRGB(x, y);
+                int key = x+y*WINWIDTH;
+
+                // put non-alpha pixels
+                if ((pixelColor & 0xFF000000) != 0) {
+                    map.put(key, true);
+                }
+            }
+        }
+
+		return map;
+    }
+
 	// -------- GLOBAL VARIABLES --------
 	private static Boolean endgame;
 	private static Boolean GameOver = false;
@@ -914,7 +967,7 @@ public class Racing {
 	private static Color CELESTIAL = new Color(49, 151, 199);
 	private static Color HIGHLIGHT = new Color(110, 168, 195);
 	private static Color URANIAN = new Color(164, 210, 232);
-	private static Color P1BLUE = new Color(50, 115, 213);
+	private static Color P1BLUE = new Color(29, 78, 153);
 	private static Color P2RED = new Color(213, 50, 50);
 
 	private static int XOFFSET, YOFFSET, WINWIDTH, WINHEIGHT;
@@ -928,5 +981,7 @@ public class Racing {
 	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
 	private static BufferedImage sky, dirt, track;
+	private static Map<Integer, Boolean> nonAlphaSkyMap;
+	private static Map<Integer, Boolean> nonAlphaDirtMap;
 	private static BufferedImage player1, player2;
 }
