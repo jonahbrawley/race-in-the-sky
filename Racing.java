@@ -1,4 +1,3 @@
-import java.util.Vector;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +24,7 @@ import java.awt.*;
 public class Racing {
 	public Racing() {
 		setup();
+		appFrame = new JFrame("The great race in the sky");
 		initUI();
 	}
 
@@ -34,12 +34,13 @@ public class Racing {
 		});
 	}
 
-	private void initUI() {
-		appFrame = new JFrame("The Amazing Race");
+	private static void initUI() {
+		String[] laps_choices = { "3 Laps", "4 Laps", "5 Laps", "7 Laps"};
+
 		appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		appFrame.setSize(WINWIDTH, WINHEIGHT);
 
-		JPanel gamePanel = new GamePanel();
+		gamePanel = new GamePanel();
 		gamePanel.setLayout(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -50,11 +51,16 @@ public class Racing {
 
 			// Create and add the image label
 		    ImageIcon titleImage = new ImageIcon("title.png");
-		    JLabel titleLabel = new JLabel(titleImage);
+		    titleLabel = new JLabel(titleImage);
 		    gamePanel.add(titleLabel, gbc);
 
 		    // Add a rigid area to create space between the image and buttons
 		    gamePanel.add(Box.createRigidArea(new Dimension(0, 10)), gbc);
+
+			lapsChoiceBox = new JComboBox<String>(laps_choices);
+			gamePanel.add(lapsChoiceBox, gbc);
+
+			gbc.insets = new Insets(10, 0, 0, 0);
 
 			startButton = new MyButton("START RACE");
 			startButton.addActionListener(new StartGame((GamePanel) gamePanel));
@@ -77,6 +83,9 @@ public class Racing {
 			bindKey((JPanel) gamePanel, "A");
 			bindKey((JPanel) gamePanel, "S");
 			bindKey((JPanel) gamePanel, "D");
+
+			bindKey((JPanel) gamePanel, "Q"); // quit
+			bindKey((JPanel) gamePanel, "T"); // return to title
 
 		gamePanel.setBackground(CELESTIAL);
 		appFrame.getContentPane().add(gamePanel, "Center");
@@ -131,7 +140,18 @@ public class Racing {
 		public void actionPerformed(ActionEvent ae) { // autechre
 			startButton.setVisible(false);
 			quitButton.setVisible(false);
+			lapsChoiceBox.setVisible(false);
 			endgame = true;
+
+			if (lapsChoiceBox.getSelectedIndex() == 0) {
+				p_max_laps = 3;
+			} else if (lapsChoiceBox.getSelectedIndex() == 1) {
+				p_max_laps = 4;
+			} else if (lapsChoiceBox.getSelectedIndex() == 2) {
+				p_max_laps = 5;
+			} else if (lapsChoiceBox.getSelectedIndex() == 3) {
+				p_max_laps = 7;
+			}
 
 			upPressed = false;
 			downPressed = false;
@@ -148,13 +168,12 @@ public class Racing {
 
 			try { Thread.sleep(50); } catch (InterruptedException ie) { }
 
-			endgame = false;
-			//gamePanel.setGameActive(true);
+			endgame = false; // this variable is super not useful
 			gameActive = true;
 			gamePanel.startAnimation();
 
-			Thread t1 = new Thread( new PlayerOneMover() );
-			Thread t2 = new Thread( new PlayerTwoMover() );
+			t1 = new Thread( new PlayerOneMover() );
+			t2 = new Thread( new PlayerTwoMover() );
 
 			t1.start();
 			t2.start();
@@ -196,12 +215,12 @@ public class Racing {
 				g2D.setFont(new Font("SansSerif", Font.PLAIN, 18));
 				
 				g2D.setColor(P1BLUE); // p1 info
-				g2D.drawString("Lap: " + p1_curr_lap, 15, 15); // current lap
+				g2D.drawString("Lap: " + p1_curr_lap + " of " + p_max_laps, 15, 15); // current lap
 				g2D.drawString("Best time: " + p1BestTime, 15, 35); // best lap time
 				g2D.drawString("Speed: " + Math.round(p1velocity*50) + "v/s", 15, 55); // speed
 
 				g2D.setColor(P2RED); // p2 info
-				g2D.drawString("Lap: " + p2_curr_lap, WINWIDTH-130, 15);
+				g2D.drawString("Lap: " + p2_curr_lap + " of " + p_max_laps, WINWIDTH-130, 15);
 				g2D.drawString("Best time: " + p2BestTime, WINWIDTH-130, 35);
 				g2D.drawString("Speed: " + Math.round(p2velocity*50)  + "v/s", WINWIDTH-130, 55); // speed
 
@@ -221,6 +240,7 @@ public class Racing {
 
 			if (GameOver) {
 				Graphics2D g2D = (Graphics2D) g;
+
 				if (p1won) {
 					g2D.setFont(new Font("SansSerif", Font.PLAIN, 36));
 					g2D.setColor(P1BLUE);
@@ -231,6 +251,37 @@ public class Racing {
 					g2D.setFont(new Font("SansSerif", Font.PLAIN, 36));
 					g2D.drawString("Playa TWO won !!!!!!!!!!!! :DDDDDDDD", 50, 50);
 				}
+
+				g2D.setColor(URANIAN);
+				g2D.setFont(new Font("SansSerif", Font.PLAIN, 30));
+				g2D.drawString("Press <Q> to quit", 50, 150);
+
+				if (qPressed) { System.exit(0); }
+				// if (tPressed) {
+				// 	System.out.println("returning to title");
+				// 	t1.interrupt();
+				// 	t2.interrupt();
+
+				// 	stopAnimation();
+				// 	GameOver = false;
+				// 	tPressed = false;
+
+				// 	// appFrame.getContentPane().add(titleLabel);
+				// 	// appFrame.getContentPane().add(lapsChoiceBox);
+				// 	// appFrame.getContentPane().add(startButton);
+				// 	// appFrame.getContentPane().add(quitButton);
+
+				// 	g2D.dispose();
+				// 	appFrame.remove(gamePanel);
+
+				// 	titleLabel.setVisible(true);
+				// 	lapsChoiceBox.setVisible(true);
+				// 	startButton.setVisible(true);
+				// 	quitButton.setVisible(true);
+
+				// 	appFrame.repaint();
+				// }
+
 				g2D.dispose();
 			}
 		}
@@ -253,7 +304,7 @@ public class Racing {
 			brakingforce = 0.02;
 
 			refreshPoints(p1_lap_progress);
-			p1_curr_lap = 3;
+			p1_curr_lap = 1;
 
 			timeTracker.startLap(true); // is p1
 		}
@@ -358,7 +409,7 @@ public class Racing {
 			brakingforce = 0.02;
 
 			refreshPoints(p2_lap_progress);
-			p2_curr_lap = 3;
+			p2_curr_lap = 1;
 
 			timeTracker.startLap(false); // is not p1
 		}
@@ -497,12 +548,12 @@ public class Racing {
 				refreshPoints(lapProgress);
 			}
 		}
-		if (p1_curr_lap == 4) {
+		if (p1_curr_lap > p_max_laps) {
 			p1won = true;
 			gameActive = false;
 			GameOver = true;
 		}
-		if (p2_curr_lap == 4) {
+		if (p2_curr_lap > p_max_laps) {
 			p2won = true;
 			gameActive = false;
 			GameOver = true;
@@ -605,6 +656,9 @@ public class Racing {
 			if (action.equals("S")) { sPressed = true; }
 			if (action.equals("A")) { aPressed = true; }
 			if (action.equals("D")) { dPressed = true; }
+
+			if (action.equals("Q") && (GameOver == true)) { qPressed = true; }
+			if (action.equals("T") && (GameOver == true)) { tPressed = true; }
 		}
 	
 		private String action;
@@ -624,6 +678,9 @@ public class Racing {
 			if (action.equals("S")) { sPressed = false; }
 			if (action.equals("A")) { aPressed = false; }
 			if (action.equals("D")) { dPressed = false; }
+
+			// check for Q not needed, since quitting
+			if (action.equals("T") && (GameOver == true)) { tPressed = false; }
 		}
 
 		private String action;
@@ -863,6 +920,8 @@ public class Racing {
 	private static boolean gameActive = false;
 	private static Boolean upPressed, downPressed, leftPressed, rightPressed;
 	private static Boolean wPressed, sPressed, aPressed, dPressed;
+	private static Boolean qPressed = false;
+	private static Boolean tPressed = false;
 	private static Boolean p1FallRecentlyPlayed = false;
 	private static Boolean p2FallRecentlyPlayed = false;
 	private static Boolean p1dead = false;
@@ -870,6 +929,8 @@ public class Racing {
 	private static Boolean SOUNDS_ENABLED = false;
 
 	private static JButton startButton, quitButton;
+	private static JLabel titleLabel;
+	private static JComboBox lapsChoiceBox;
 
 	private static Point cp1 = new Point(75, 420);
 	private static Point cp2 = new Point(258, 233);
@@ -881,6 +942,7 @@ public class Racing {
 	private static ArrayList<Point> p1_lap_progress = new ArrayList<Point>();
 	private static ArrayList<Point> p2_lap_progress = new ArrayList<Point>();
 	private static Integer p1_curr_lap, p2_curr_lap;
+	private static Integer p_max_laps = 3; // default to 3 total laps
 
 	private static long p1LapStartTime = 0;
 	private static ArrayList<Double> p1LapTimes = new ArrayList<>();
@@ -907,6 +969,7 @@ public class Racing {
 	private static double p2width, p2height, p2originalX, p2originalY, p2velocity;
 
 	private static JFrame appFrame;
+	private static GamePanel gamePanel;
 
 	private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 
@@ -914,4 +977,6 @@ public class Racing {
 	private static Map<Integer, Boolean> nonAlphaSkyMap;
 	private static Map<Integer, Boolean> nonAlphaDirtMap;
 	private static BufferedImage player1, player2;
+
+	private static Thread t1, t2;
 }
